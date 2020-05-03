@@ -172,10 +172,23 @@ def main():
 
     # Obstacles
     rectObs = []
+    """
+    For each rectangle obstacle, put in an EIGHT (8) item list with the following:
+        Start X position (0 starts on left side)
+        Start Y position (0 starts on top side)
+        X dimensions of obstacle
+        Y dimensions of obstacle
+        X units to move per tick
+        Y units to move per tick
+        X starting direction (1 for right, -1 for left)
+        Y starting direction (1 for down, -1 for up)
+
+    Obstacles will bounce off boder and stay within map
+    """
     # Rectangle Obstacle 1
-    rectObs.append([50,50,100,100,0,5,1,1])
+    rectObs.append([50,50,100,100,0,10,1,1])
     # Rectangle Obstacle 2
-    rectObs.append([400,200,100,100,0,5,1,1])
+    rectObs.append([400,200,100,100,0,10,1,1])
 
     nodes = []
     reset()
