@@ -59,8 +59,6 @@ def collides(p):    #check if point collides with the obstacle
     return False
 
 
-
-
 def get_random_clear():
     while True:
         p = random.random()*XDIM, random.random()*YDIM
@@ -69,38 +67,97 @@ def get_random_clear():
             return p
 
 # ===== Obstacles =====
-def init_obstacles(speedX,speedY):  #initialized the obstacle with moving speed
-    global rectObs
-    rectObs = []
-    # Rectangle Obstacle #1
-    obs1_XStart = 50
-    obs1_YStart = 50
-    obs1_XLength = 100
-    obs1_YLength = 100
-    rectObs.append(pygame.Rect((obs1_XStart+speedX,obs1_YStart+speedY),\
-    (obs1_XLength,obs1_YLength)))
-    # Rectangle Obstacle #2
-    obs2_XStart = 400
-    obs2_YStart = 200
-    obs2_XLength = 100
-    obs2_YLength = 100
-    rectObs.append(pygame.Rect((obs2_XStart+speedX,obs2_YStart+speedY),\
-    (obs2_XLength,obs2_YLength)))
+def draw_rect_obs(list):
+    """
+    Setup for rectangle obstacle
 
-    for rect in rectObs:
-        pygame.draw.rect(screen, black, rect)
+    Inputs:
+        startX:     Left-corner X position
+        startY:     Left-corner Y position
+        lengthX:    Length of rectangle
+        lengthY:    Width of rectangle
+        speedX:     Units per tick in X direction
+        speedY:     Units per tick in Y direction
+    """
+    # Input list
+    startX = list[0]
+    startY = list[1]
+    lengthX = list[2]
+    lengthY = list[3]
 
+    # Draw Obstacle
+    print(list)
+    pygame.draw.rect(screen, black, \
+    pygame.Rect((startX, startY),(lengthX, lengthY)))
+
+def dir(list):
+    """
+    Returns an array to change moving obstacle direction once edge of map is reached
+
+    Inputs:
+        startX:     Left-corner X position
+        startY:     Left-corner Y position
+        lengthX:    Length of rectangle
+        lengthY:    Width of rectangle
+        speedX:     Units per tick in X direction
+        speedY:     Units per tick in Y direction
+
+    Outputs:
+        [1,1]:      Left or top side reached map edge
+        [-1,-1]:    Right or bottom side reached map edge
+        [1,-1]:     Left or bottom side reached map edge
+        [-1,1]:     Right or top side reached map edge
+    """
+    # Input list
+    startX = list[0]
+    startY = list[1]
+    lengthX = list[2]
+    lengthY = list[3]
+    speedX = list[4]
+    speedY = list[5]
+    dirX = list[6]
+    dirY = list[7]
+
+    # Check if obstacle reached edge of map
+    if (startX + speedX) < 0:
+        dirX = 1
+    if (startX + lengthX + speedX) > XDIM:
+        dirX = -1
+    if (startY + speedY) < 0:
+        dirY = 1
+    if (startY + lengthY + speedY) > YDIM:
+        dirY = -1
+
+    return [dirX,dirY]
+
+def move(rectObs):
+    """
+    Moves obstacles and returns updated positions
+    """
+    updated_rectObs = []
+    screen.fill(white)
+    for list in rectObs:
+        # Input list
+        [dirX,dirY] = dir(list)
+        startX = list[0]
+        startY = list[1]
+        lengthX = list[2]
+        lengthY = list[3]
+        speedX = list[4]
+        speedY = list[5]
+
+        startX += speedX*dirX
+        startY += speedY*dirY
+
+        rect = [startX,startY,lengthX,lengthY]
+        draw_rect_obs(rect)
+        updated_rectObs.append([startX,startY,lengthX,lengthY,speedX,speedY,dirX,dirY])
+
+    return updated_rectObs
 
 def reset():
     global count
     screen.fill(white)
-    init_obstacles(0,0) # zero changing position for obstacles
-    count = 0
-
-def move(speedX,speedY):
-    global count
-    screen.fill(white)
-    init_obstacles(speedX,speedY) # changing position for obstacles
     count = 0
 
 # ===== Program =====
@@ -112,8 +169,13 @@ def main():
     goalPoseSet = False
     goalPoint = Node(None, None)
     currentState = 'init'
-    speedX = 0
-    speedY = 0
+
+    # Obstacles
+    rectObs = []
+    # Rectangle Obstacle 1
+    rectObs.append([50,50,100,100,0,5,1,1])
+    # Rectangle Obstacle 2
+    rectObs.append([400,200,100,100,0,5,1,1])
 
     nodes = []
     reset()
@@ -193,10 +255,9 @@ def main():
                     initPoseSet = False
                     goalPoseSet = False
                     reset()
-        speedX += 0
-        speedY += 5
 
-        move(speedX,speedY)
+        rectObs = move(rectObs)
+
         pygame.display.update()
         fpsClock.tick(10000)
 
