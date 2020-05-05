@@ -1,20 +1,21 @@
-#!/usr/bin/env python
-
+"""
+implementation of paper by Sertac Karaman in 2010
+http://roboticsproceedings.org/rss06/p34.pdf
+"""
 import sys, random, math, pygame
 from pygame.locals import *
-from math import sqrt, cos, sin, atan2
-# from lineIntersect import *
+from math import sqrt,cos,sin,atan2
 import time
-
-# constants
+#constants
 XDIM = 640
 YDIM = 480
 WINSIZE = [XDIM, YDIM]
 EPSILON = 10.0
-NUMNODES = 8000
+NUMNODES = 5000 #samples/iterations
 RADIUS = 30.0
 TARGET_RADIUS = 200.0
-OBS = [(50, 0, 50, 300), (200, 100, 50, 400), (350, 0, 50, 300), (500, 100, 50, 400)]
+OBS=[(200,300,200,100), (350,100,100,100)]
+
 
 
 class Node:
@@ -32,7 +33,7 @@ def obsDraw(pygame, screen):
 
 
 def dist(p1, p2):
-    return sqrt((p1[0] - p2[0]) * (p1[0] - p2[0]) + (p1[1] - p2[1]) * (p1[1] - p2[1]))
+    return sqrt((p1[0] - p2[0]) ** 2 + (p1[1] - p2[1]) ** 2)
 
 
 def step_from_to(p1, p2):
@@ -130,7 +131,7 @@ def main():
     obsDraw(pygame, screen)
 
     start = Node(0.0, 0.0)  # Start in the corner
-    goal = Node(630.0, 470.0)
+    goal = Node(630.0, 200.0)
 
     start_nodes = []
     goal_nodes = []
@@ -169,16 +170,14 @@ def main():
         end_time = time.time()
         time_taken = end_time - start_time
         total_cost = start_nodes[-1].cost + goal_nodes[-1].cost
-        print("")
-        print("Bi-directional RRT* Extend Stats")
-        print("")
+
         print("Cost       : " + str(total_cost) + ' units')
-        print("Time Taken : " + str(time_taken) + ' sec')
+        print("Time Taken : " + str(time_taken) + ' s')
 
         drawPath(start_nodes, pygame, screen)
         drawPath(goal_nodes, pygame, screen)
         pygame.display.update()
-        pygame.image.save(screen, "bi_rrt_extend_both.jpg")
+        # pygame.image.save(screen, "bi_rrt_extend_both.jpg")
     else:
         print("Path not found. Try increasing the number of iterations")
 
