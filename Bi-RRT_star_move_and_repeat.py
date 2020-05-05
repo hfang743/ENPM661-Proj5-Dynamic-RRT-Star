@@ -2,22 +2,10 @@
 implementation of paper by Sertac Karaman in 2010
 http://roboticsproceedings.org/rss06/p34.pdf
 """
-
-"""
-Added moving obstacles to map
-"""
-
-# ENPM661
-# Project 5
-# Jaad Lepak
-
-# ===== Libraries =====
 import sys, random, math, pygame
 from pygame.locals import *
 from math import sqrt,cos,sin,atan2
 import time
-
-# ===== Initialization =====
 #constants
 XDIM = 640
 YDIM = 480
@@ -143,11 +131,9 @@ def updateObs():
         OBS[i], OBS_motion[i] = move(OBS[i],OBS_motion[i])
 
     screen.fill(white)
-    obsDraw(pygame, screen)
     pygame.display.update()
 
 
-# ===== Other classes/functions =====
 
 class Node:
     def __init__(self, xcoord=0, ycoord=0, cost=0, parent=None):
@@ -155,6 +141,13 @@ class Node:
         self.y = ycoord
         self.cost = cost
         self.parent = parent
+
+
+def obsDraw(pygame, screen):
+    blue = (0, 0, 255)
+    for o in OBS:
+        pygame.draw.rect(screen, blue, o)
+
 
 def dist(p1, p2):
     return sqrt((p1[0] - p2[0]) ** 2 + (p1[1] - p2[1]) ** 2)
@@ -262,15 +255,13 @@ def main():
     start_nodes = []
     goal_nodes = []
 
-    DRAW = []
-
     start_nodes.append(start)
     goal_nodes.append(goal)
 
     flag = False
     i = 0
     start_time = time.time()
-    while i < NUMNODES: # and flag != True:
+    while i < NUMNODES and flag != True:
 
         start_nodes = extend(start_nodes, screen, black)
 
@@ -284,20 +275,15 @@ def main():
                 newnode = Node(q_target.x, q_target.y)
                 [newnode, nn] = chooseParent(q_near, newnode, start_nodes)
                 start_nodes.append(newnode)
-                DRAW.append([[q_near.x, q_near.y],[newnode.x, newnode.y]])
                 pygame.draw.line(screen, black, [q_near.x, q_near.y], [newnode.x, newnode.y])
                 flag = True
                 print("Path found")
                 break
+
         i += 1
         for e in pygame.event.get():
             if e.type == QUIT or (e.type == KEYUP and e.key == K_ESCAPE):
                 sys.exit("Leaving because you requested it.")
-
-        # Update map
-        updateObs()
-        for node in DRAW:
-            pygame.draw.line(screen, black, node[0], node[1])
 
     if flag == True:
         end_time = time.time()
@@ -310,13 +296,16 @@ def main():
         drawPath(start_nodes, pygame, screen)
         drawPath(goal_nodes, pygame, screen)
         pygame.display.update()
+        time.sleep(0.5)
         # pygame.image.save(screen, "bi_rrt_extend_both.jpg")
     else:
         print("Path not found. Try increasing the number of iterations")
 
 
 if __name__ == '__main__':
-    main()
+    while True:
+        main()
+        updateObs()
     running = True
     while running:
         for event in pygame.event.get():
