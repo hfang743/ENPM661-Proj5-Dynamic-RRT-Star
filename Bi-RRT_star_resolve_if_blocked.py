@@ -28,6 +28,7 @@ For each rectangle obstacle, list with the following:
     Y dimensions of obstacle
 """
 # Obstacles
+global OBS
 OBS = [[50,50,100,100]]
 OBS.append([400,200,100,100])
 OBS.append([200,100,100,100])
@@ -41,9 +42,9 @@ For each rectangle obstacle, list with the following:
 Obstacles will bounce off boder and stay within map
 """
 # Motion informatoin
-OBS_motion = [[0,10,1,1]]
-OBS_motion.append([0,10,1,1])
-OBS_motion.append([10,0,1,1])
+OBS_motion = [[0,0.1,1,1]]
+OBS_motion.append([0,0.1,1,1])
+OBS_motion.append([0.1,0,1,1])
 
 def dir(obs,obs_motion):
     """
@@ -115,17 +116,12 @@ def move(obs,obs_motion):
 
     return obs,obs_motion
 
-def obsDraw(pygame, screen):
-    global white
-    blue = (0, 0, 255)
-    for o in OBS:
-        pygame.draw.rect(screen, blue, o)
-
 def updateObs():
     """
     Update moving obstacle location on map
     """
     global screen
+    global white
     # Count number of obstacles
     numObs = 0
     for o in OBS:
@@ -133,10 +129,6 @@ def updateObs():
     # Update moving obstacle position
     for i in range(0, numObs):
         OBS[i], OBS_motion[i] = move(OBS[i],OBS_motion[i])
-
-    screen.fill(white)
-    pygame.display.update()
-
 
 
 class Node:
@@ -223,7 +215,6 @@ def extend(nodes, screen, black):
     if checkIntersect(nn, newnode, OBS):
         [newnode, nn] = chooseParent(nn, newnode, nodes)
         nodes.append(newnode)
-        DRAW = [[nn.x, nn.y], [newnode.x, newnode.y]]
         pygame.draw.line(screen, black, [nn.x, nn.y], [newnode.x, newnode.y])
         pygame.display.update()
 
@@ -231,7 +222,7 @@ def extend(nodes, screen, black):
         if e.type == QUIT or (e.type == KEYUP and e.key == K_ESCAPE):
             sys.exit("Leaving because you requested it.")
 
-    return nodes,DRAW
+    return nodes
 
 
 def drawPath(nodes, pygame, screen):
@@ -241,6 +232,30 @@ def drawPath(nodes, pygame, screen):
     while last_node != start:
         pygame.draw.line(screen, red, [last_node.x, last_node.y], [last_node.parent.x, last_node.parent.y], 5)
         last_node = last_node.parent
+
+def checkCollision(nodes, OBS):
+    """
+    Checks if the optimal path is being blocked by an obstacle
+    """
+    last_node = nodes[-2]
+    start = nodes[0]
+    while last_node != start:
+        if checkIntersect(last_node, last_node.parent, OBS) == False:
+            return True
+
+    return False
+
+def refresh():
+    pygame.init()
+    global screen
+    screen = pygame.display.set_mode(WINSIZE)
+    pygame.display.set_caption('Bi-directional_RRT_star')
+    global white
+    white = 255, 255, 255
+    black = 20, 20, 40
+    screen.fill(white)
+    obsDraw(pygame, screen)
+    pygame.display.update()
 
 
 def main():
@@ -260,8 +275,6 @@ def main():
     start_nodes = []
     goal_nodes = []
 
-    DRAW = []
-
     start_nodes.append(start)
     goal_nodes.append(goal)
 
@@ -270,12 +283,10 @@ def main():
     start_time = time.time()
     while i < NUMNODES and flag != True:
 
-        start_nodes, DRAWstart = extend(start_nodes, screen, black)
-        DRAW.append(DRAWstart)
+        start_nodes = extend(start_nodes, screen, black)
 
 
-        goal_nodes, DRAWgoal = extend(goal_nodes, screen, black)
-        DRAW.append(DRAWgoal)
+        goal_nodes = extend(goal_nodes, screen, black)
         q_target = goal_nodes[-1]
 
         # try to connect q_near and q_target if dist is less than a target radius
@@ -285,7 +296,6 @@ def main():
                 newnode = Node(q_target.x, q_target.y)
                 [newnode, nn] = chooseParent(q_near, newnode, start_nodes)
                 start_nodes.append(newnode)
-                DRAW.append([[q_near.x, q_near.y],[newnode.x, newnode.y]])
                 pygame.draw.line(screen, black, [q_near.x, q_near.y], [newnode.x, newnode.y])
                 flag = True
                 print("Path found")
@@ -307,6 +317,12 @@ def main():
 
         drawPath(start_nodes, pygame, screen)
         drawPath(goal_nodes, pygame, screen)
+
+        global START_NODES
+        global GOAL_NODES
+        START_NODES = start_nodes
+        GOAL_NODES = goal_nodes
+
         pygame.display.update()
         #time.sleep(0.01)
         # pygame.image.save(screen, "bi_rrt_extend_both.jpg")
@@ -314,18 +330,18 @@ def main():
         print("Path not found. Try increasing the number of iterations")
 
 
-
 if __name__ == '__main__':
     main()
-    while True:
-        for node in start_nodes:
-            if
-    updateObs()
-    for node in DRAW:
-        pygame.draw.line(screen, black, node[0], node[1])
-    #while True:
     running = True
     while running:
+        updateObs()
+        refresh()
+
+        # EXITS program using ESC
+        for e in pygame.event.get():
+            if e.type == QUIT or (e.type == KEYUP and e.key == K_ESCAPE):
+                sys.exit("Leaving because you requested it.")
+
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
                 running = False
