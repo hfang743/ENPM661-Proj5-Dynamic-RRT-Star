@@ -37,9 +37,9 @@ For each rectangle obstacle, list with the following:
 Obstacles will bounce off boder and stay within map
 """
 # Motion informatoin
-OBS_motion = [[0,0.5,1,1]]
-OBS_motion.append([0,0.5,1,1])
-OBS_motion.append([0.5,0,1,1])
+OBS_motion = [[0,10,1,1]]
+OBS_motion.append([0,10,1,1])
+OBS_motion.append([10,0,1,1])
 
 def dir(obs,obs_motion):
     """
