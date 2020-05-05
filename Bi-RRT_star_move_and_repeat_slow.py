@@ -219,7 +219,7 @@ def extend(nodes, screen, black):
     if checkIntersect(nn, newnode, OBS):
         [newnode, nn] = chooseParent(nn, newnode, nodes)
         nodes.append(newnode)
-        #pygame.draw.line(screen, black, [nn.x, nn.y], [newnode.x, newnode.y])
+        pygame.draw.line(screen, black, [nn.x, nn.y], [newnode.x, newnode.y])
         pygame.display.update()
 
     for e in pygame.event.get():
@@ -296,7 +296,7 @@ def main():
         drawPath(start_nodes, pygame, screen)
         drawPath(goal_nodes, pygame, screen)
         pygame.display.update()
-        time.sleep(0.01)
+        time.sleep(0.1)
         # pygame.image.save(screen, "bi_rrt_extend_both.jpg")
     else:
         print("Path not found. Try increasing the number of iterations")

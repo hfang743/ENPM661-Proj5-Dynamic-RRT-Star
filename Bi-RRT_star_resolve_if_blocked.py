@@ -1,4 +1,8 @@
 """
+INCOMEPLETE
+"""
+
+"""
 implementation of paper by Sertac Karaman in 2010
 http://roboticsproceedings.org/rss06/p34.pdf
 """
@@ -219,14 +223,15 @@ def extend(nodes, screen, black):
     if checkIntersect(nn, newnode, OBS):
         [newnode, nn] = chooseParent(nn, newnode, nodes)
         nodes.append(newnode)
-        #pygame.draw.line(screen, black, [nn.x, nn.y], [newnode.x, newnode.y])
+        DRAW = [[nn.x, nn.y], [newnode.x, newnode.y]]
+        pygame.draw.line(screen, black, [nn.x, nn.y], [newnode.x, newnode.y])
         pygame.display.update()
 
     for e in pygame.event.get():
         if e.type == QUIT or (e.type == KEYUP and e.key == K_ESCAPE):
             sys.exit("Leaving because you requested it.")
 
-    return nodes
+    return nodes,DRAW
 
 
 def drawPath(nodes, pygame, screen):
@@ -255,6 +260,8 @@ def main():
     start_nodes = []
     goal_nodes = []
 
+    DRAW = []
+
     start_nodes.append(start)
     goal_nodes.append(goal)
 
@@ -263,9 +270,12 @@ def main():
     start_time = time.time()
     while i < NUMNODES and flag != True:
 
-        start_nodes = extend(start_nodes, screen, black)
+        start_nodes, DRAWstart = extend(start_nodes, screen, black)
+        DRAW.append(DRAWstart)
 
-        goal_nodes = extend(goal_nodes, screen, black)
+
+        goal_nodes, DRAWgoal = extend(goal_nodes, screen, black)
+        DRAW.append(DRAWgoal)
         q_target = goal_nodes[-1]
 
         # try to connect q_near and q_target if dist is less than a target radius
@@ -275,6 +285,7 @@ def main():
                 newnode = Node(q_target.x, q_target.y)
                 [newnode, nn] = chooseParent(q_near, newnode, start_nodes)
                 start_nodes.append(newnode)
+                DRAW.append([[q_near.x, q_near.y],[newnode.x, newnode.y]])
                 pygame.draw.line(screen, black, [q_near.x, q_near.y], [newnode.x, newnode.y])
                 flag = True
                 print("Path found")
@@ -284,6 +295,7 @@ def main():
         for e in pygame.event.get():
             if e.type == QUIT or (e.type == KEYUP and e.key == K_ESCAPE):
                 sys.exit("Leaving because you requested it.")
+
 
     if flag == True:
         end_time = time.time()
@@ -296,16 +308,22 @@ def main():
         drawPath(start_nodes, pygame, screen)
         drawPath(goal_nodes, pygame, screen)
         pygame.display.update()
-        time.sleep(0.01)
+        #time.sleep(0.01)
         # pygame.image.save(screen, "bi_rrt_extend_both.jpg")
     else:
         print("Path not found. Try increasing the number of iterations")
 
 
+
 if __name__ == '__main__':
+    main()
     while True:
-        main()
-        updateObs()
+        for node in start_nodes:
+            if
+    updateObs()
+    for node in DRAW:
+        pygame.draw.line(screen, black, node[0], node[1])
+    #while True:
     running = True
     while running:
         for event in pygame.event.get():
