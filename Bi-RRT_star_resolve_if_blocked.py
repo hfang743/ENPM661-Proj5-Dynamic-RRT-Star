@@ -42,9 +42,9 @@ For each rectangle obstacle, list with the following:
 Obstacles will bounce off boder and stay within map
 """
 # Motion informatoin
-OBS_motion = [[0,0.1,1,1]]
-OBS_motion.append([0,0.1,1,1])
-OBS_motion.append([0.1,0,1,1])
+OBS_motion = [[0,10,1,1]]
+OBS_motion.append([0,10,1,1])
+OBS_motion.append([10,0,1,1])
 
 def dir(obs,obs_motion):
     """
@@ -129,6 +129,9 @@ def updateObs():
     # Update moving obstacle position
     for i in range(0, numObs):
         OBS[i], OBS_motion[i] = move(OBS[i],OBS_motion[i])
+
+    pygame.display.update()
+
 
 
 class Node:
@@ -241,6 +244,8 @@ def checkCollision(nodes, OBS):
     start = nodes[0]
     while last_node != start:
         if checkIntersect(last_node, last_node.parent, OBS) == False:
+            continue
+        else:
             return True
 
     return False
@@ -336,6 +341,12 @@ if __name__ == '__main__':
     while running:
         updateObs()
         refresh()
+        drawPath(START_NODES, pygame, screen)
+        drawPath(GOAL_NODES, pygame, screen)
+        time.sleep(0.01)
+        if checkCollision(START_NODES, OBS) == True or checkCollision(GOAL_NODES, OBS) == True:
+            print("PATH BLOCKED")
+            main()
 
         # EXITS program using ESC
         for e in pygame.event.get():
