@@ -250,19 +250,6 @@ def checkCollision(nodes, OBS):
 
     return False
 
-def refresh():
-    pygame.init()
-    global screen
-    screen = pygame.display.set_mode(WINSIZE)
-    pygame.display.set_caption('Bi-directional_RRT_star')
-    global white
-    white = 255, 255, 255
-    black = 20, 20, 40
-    screen.fill(white)
-    obsDraw(pygame, screen)
-    pygame.display.update()
-
-
 def main():
     pygame.init()
     global screen
@@ -340,12 +327,12 @@ if __name__ == '__main__':
     running = True
     while running:
         updateObs()
-        refresh()
         drawPath(START_NODES, pygame, screen)
         drawPath(GOAL_NODES, pygame, screen)
-        time.sleep(0.01)
+        pygame.display.update()
         if checkCollision(START_NODES, OBS) == True or checkCollision(GOAL_NODES, OBS) == True:
             print("PATH BLOCKED")
+            time.sleep(0.1)
             main()
 
         # EXITS program using ESC
