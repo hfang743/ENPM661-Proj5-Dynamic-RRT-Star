@@ -30,7 +30,10 @@ cyan = 0,180,105
 count = 0
 rectObs = []
 
-def dist(p1,p2):    #distance between two points
+def dist(p1,p2):
+    """
+    get the distance between point p1 and point p2
+    """
     return sqrt((p1[0]-p2[0])*(p1[0]-p2[0])+(p1[1]-p2[1])*(p1[1]-p2[1]))
 
 def point_circle_collision(p1, p2, radius):
