@@ -371,23 +371,31 @@ def main():
     start = Node(0.0, 0.0)  # Start in the corner
     START_NODES, GOAL_NODES = biRRT(start)
 
-    while True:
+    goal_reached = False
+    counter = 1
+
+    while goal_reached == False:
+
+        start = START_NODES[counter].parent
+
+        if start == GOAL_NODES[0]:
+            goal_reached = True
+            break
 
         screen.fill(white)
         updateObs() # Move stored position of obstacles
         obsDraw(pygame, screen) # Draw obstacles on map
         pathDraw(START_NODES,GOAL_NODES) # Draw last known optimal path
-        animateRobot(START_NODES[0]) # Shows robot as green circle along optimal path
+        animateRobot(start) # Shows robot as green circle along optimal path
+        counter += 1
+        time.sleep(0.1)
         # If any obstacle blocks the last known optimal path
         if checkCollision(START_NODES, OBS) == True:
             START_NODES, GOAL_NODES = biRRT(start)
+            counter = 0
         if checkCollision(GOAL_NODES, OBS) == True:
             START_NODES, GOAL_NODES = biRRT(start)
-
-        checkCollision(START_NODES, OBS)
-        checkCollision(GOAL_NODES, OBS)
-
-        start = START_NODES[1]
+            counter = 0
 
 
 
