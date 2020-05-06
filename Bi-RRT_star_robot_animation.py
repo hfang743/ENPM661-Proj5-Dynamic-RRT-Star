@@ -1,4 +1,8 @@
 """
+INCOMPLETE
+"""
+
+"""
 implementation of paper by Sertac Karaman in 2010
 http://roboticsproceedings.org/rss06/p34.pdf
 """
@@ -14,115 +18,7 @@ EPSILON = 10.0
 NUMNODES = 5000 #samples/iterations
 RADIUS = 30.0
 TARGET_RADIUS = 200.0
-
-# ===== Dynamic Obstacles =====
-"""
-For each rectangle obstacle, list with the following:
-    Start X position (0 starts on left side)
-    Start Y position (0 starts on top side)
-    X dimensions of obstacle
-    Y dimensions of obstacle
-"""
-# Obstacles
-global OBS
-OBS = [[50,50,100,100]]
-OBS.append([400,200,100,100])
-OBS.append([200,100,100,100])
-"""
-For each rectangle obstacle, list with the following:
-    X units to move per tick
-    Y units to move per tick
-    X starting direction (1 for right, -1 for left)
-    Y starting direction (1 for down, -1 for up)
-
-Obstacles will bounce off boder and stay within map
-"""
-# Motion informatoin
-OBS_motion = [[0,1,1,1]]
-OBS_motion.append([0,1,1,1])
-OBS_motion.append([1,0,1,1])
-
-def dir(obs,obs_motion):
-    """
-    Returns an array to change moving obstacle direction once edge of map is reached
-
-    Inputs:
-        startX:     Left-corner X position
-        startY:     Left-corner Y position
-        lengthX:    Length of rectangle
-        lengthY:    Width of rectangle
-
-        moveX:     Units per tick in X direction
-        moveY:     Units per tick in Y direction
-        dirX:      1 for left, -1 for right
-        dirY:      1 for down, -1 for up
-    Outputs:
-        [1,1]:      Left or top side reached map edge
-        [-1,-1]:    Right or bottom side reached map edge
-        [1,-1]:     Left or bottom side reached map edge
-        [-1,1]:     Right or top side reached map edge
-    """
-    # Input list
-    startX = obs[0]
-    startY = obs[1]
-    lengthX = obs[2]
-    lengthY = obs[3]
-
-    moveX = obs_motion[0]
-    moveY = obs_motion[1]
-    dirX = obs_motion[2]
-    dirY = obs_motion[3]
-
-    # Check if obstacle reached edge of map
-    if (startX + moveX) < 0:
-        dirX = 1
-    if (startX + lengthX + moveX) > XDIM:
-        dirX = -1
-    if (startY + moveY) < 0:
-        dirY = 1
-    if (startY + lengthY + moveY) > YDIM:
-        dirY = -1
-
-    return [dirX,dirY]
-
-def move(obs,obs_motion):
-    """
-    Moves obstacles and returns updated positions
-    """
-    # Input list
-    startX = obs[0]
-    startY = obs[1]
-    lengthX = obs[2]
-    lengthY = obs[3]
-
-    moveX = obs_motion[0]
-    moveY = obs_motion[1]
-
-    # Change direction if obstacle reached end of map
-    [dirX,dirY] = dir(obs,obs_motion)
-
-    startX += moveX*dirX
-    startY += moveY*dirY
-
-    # Output
-    obs[0] = startX
-    obs[1] = startY
-    obs_motion[2] = dirX
-    obs_motion[3] = dirY
-
-    return obs,obs_motion
-
-def updateObs():
-    """
-    Update moving obstacle location on map
-    """
-    # Count number of obstacles
-    numObs = 0
-    for o in OBS:
-        numObs += 1 # number of obstacles
-    # Update moving obstacle position
-    for i in range(0, numObs):
-        OBS[i], OBS_motion[i] = move(OBS[i],OBS_motion[i])
+OBS=[(200,300,200,100), (350,100,100,100)]
 
 
 
@@ -138,8 +34,6 @@ def obsDraw(pygame, screen):
     blue = (0, 0, 255)
     for o in OBS:
         pygame.draw.rect(screen, blue, o)
-
-    pygame.display.update()
 
 
 def dist(p1, p2):
@@ -178,18 +72,18 @@ def ccw(A, B, C):
 
 # Return true if line segments AB and CD intersect
 def checkIntersect(nodeA, nodeB, OBS):
-    A = [nodeA.x, nodeA.y]
-    B = [nodeB.x, nodeB.y]
+    A = (nodeA.x, nodeA.y)
+    B = (nodeB.x, nodeB.y)
     for o in OBS:
-        obs = [o[0], o[1], o[0] + o[2], o[1] + o[3]]
-        C1 = [obs[0], obs[1]]
-        D1 = [obs[0], obs[3]]
-        C2 = [obs[0], obs[1]]
-        D2 = [obs[2], obs[1]]
-        C3 = [obs[2], obs[3]]
-        D3 = [obs[2], obs[1]]
-        C4 = [obs[2], obs[3]]
-        D4 = [obs[0], obs[3]]
+        obs = (o[0], o[1], o[0] + o[2], o[1] + o[3])
+        C1 = (obs[0], obs[1])
+        D1 = (obs[0], obs[3])
+        C2 = (obs[0], obs[1])
+        D2 = (obs[2], obs[1])
+        C3 = (obs[2], obs[3])
+        D3 = (obs[2], obs[1])
+        C4 = (obs[2], obs[3])
+        D4 = (obs[0], obs[3])
         inst1 = ccw(A, C1, D1) != ccw(B, C1, D1) and ccw(A, B, C1) != ccw(A, B, D1)
         inst2 = ccw(A, C2, D2) != ccw(B, C2, D2) and ccw(A, B, C2) != ccw(A, B, D2)
         inst3 = ccw(A, C3, D3) != ccw(B, C3, D3) and ccw(A, B, C3) != ccw(A, B, D3)
@@ -230,32 +124,32 @@ def drawPath(nodes, pygame, screen):
         pygame.draw.line(screen, red, [last_node.x, last_node.y], [last_node.parent.x, last_node.parent.y], 5)
         last_node = last_node.parent
 
-def checkCollision(nodes, OBS):
-    """
-    Checks if the optimal path is being blocked by an obstacle
-    """
-    last_node = nodes[-1]
-    start = nodes[0]
-    while last_node != start:
-        if checkIntersect(last_node.parent, last_node, OBS) == True:
-            last_node = last_node.parent
-        else:
-            return True
-
-    return False
-
-def pathDraw(startNodes,goalNodes):
-    """
-    Draws red line for optimal path using nodes from start and nodes from goal
-    """
-    drawPath(startNodes, pygame, screen)
-    drawPath(goalNodes, pygame, screen)
+def showRobot(node, pygame, screen):
+    x = int(node.x)
+    y = int(node.y)
+    pygame.draw.circle(screen, green, [x,y], 5)
     pygame.display.update()
 
-def biRRT():
-    """
-    Runs BiRRT search and returns optimal path
-    """
+def animateRobot(nodes, pygame, screen):
+    last_node = nodes[-1]
+    start = nodes[0]
+    global green
+    green = 0, 255, 0
+    while last_node != start:
+        showRobot(last_node, pygame, screen)
+        last_node = last_node.parent
+
+
+def main():
+    pygame.init()
+    screen = pygame.display.set_mode(WINSIZE)
+    pygame.display.set_caption('Bi-directional_RRT_star')
+    white = 255, 255, 255
+    black = 20, 20, 40
+    green = 0, 255, 0
+    screen.fill(white)
+    obsDraw(pygame, screen)
+
     start = Node(0.0, 0.0)  # Start in the corner
     goal = Node(630.0, 200.0)
 
@@ -271,7 +165,6 @@ def biRRT():
     while i < NUMNODES and flag != True:
 
         start_nodes = extend(start_nodes, screen, black)
-
 
         goal_nodes = extend(goal_nodes, screen, black)
         q_target = goal_nodes[-1]
@@ -293,7 +186,6 @@ def biRRT():
             if e.type == QUIT or (e.type == KEYUP and e.key == K_ESCAPE):
                 sys.exit("Leaving because you requested it.")
 
-
     if flag == True:
         end_time = time.time()
         time_taken = end_time - start_time
@@ -304,55 +196,13 @@ def biRRT():
 
         drawPath(start_nodes, pygame, screen)
         drawPath(goal_nodes, pygame, screen)
-
-        global START_NODES
-        global GOAL_NODES
-        START_NODES = start_nodes
-        GOAL_NODES = goal_nodes
-
+        animateRobot(start_nodes, pygame, screen)
+        animateRobot(goal_nodes, pygame, screen)
         pygame.display.update()
-        #time.sleep(0.01)
+
         # pygame.image.save(screen, "bi_rrt_extend_both.jpg")
     else:
         print("Path not found. Try increasing the number of iterations")
-
-    return START_NODES,GOAL_NODES
-
-def main():
-    pygame.init()
-    global screen
-    screen = pygame.display.set_mode(WINSIZE)
-    pygame.display.set_caption('Bi-directional_RRT_star')
-    global white
-    global black
-    white = 255, 255, 255
-    black = 20, 20, 40
-    screen.fill(white)
-    obsDraw(pygame, screen)
-
-    START_NODES, GOAL_NODES = biRRT()
-
-    while True:
-
-        screen.fill(white)
-        updateObs() # Move stored position of obstacles
-        obsDraw(pygame, screen) # Draw obstacles on map
-        pathDraw(START_NODES,GOAL_NODES) # Draw last known optimal path
-        # If any obstacle blocks the last known optimal path
-        if checkCollision(START_NODES, OBS) == True:
-            START_NODES, GOAL_NODES = biRRT()
-        if checkCollision(GOAL_NODES, OBS) == True:
-            START_NODES, GOAL_NODES = biRRT()
-
-        checkCollision(START_NODES, OBS)
-        checkCollision(GOAL_NODES, OBS)
-
-
-
-        for e in pygame.event.get():
-            if e.type == QUIT or (e.type == KEYUP and e.key == K_ESCAPE):
-                sys.exit("Leaving because you requested it.")
-
 
 
 if __name__ == '__main__':
