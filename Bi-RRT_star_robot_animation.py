@@ -343,15 +343,39 @@ def biRRT(start):
     return START_NODES,GOAL_NODES
 
 
+def recordPath(startNodes,goalNodes):
+    """
+    Captures all nodes from start to goal
+    """
+    startPath = []
+    goalPath = []
+    path = []
+
+    # Extract nodes from goal
+    last_node = goalNodes[-1]
+    start = goalNodes[0]
+    while last_node != start:
+        path.append(last_node)
+        last_node = last_node.parent
+
+    # Extract nodes from start
+    last_node = startNodes[-1]
+    start = startNodes[0]
+    while last_node != start:
+        path.insert(0,last_node)
+        last_node = last_node.parent
+
+    return path
+
+
 def animateRobot(node):
     """
     Shows a green circle as the robot moving along optimal path
     """
-    x = int(node.x)
-    y = int(node.y)
-    pygame.draw.circle(screen, green, [x,y], 5)
+    x = node.x
+    y = node.y
+    pygame.draw.ellipse(screen, green, [x,y,10,10])
     pygame.display.update()
-
 
 
 def main():
@@ -370,15 +394,17 @@ def main():
 
     start = Node(0.0, 0.0)  # Start in the corner
     START_NODES, GOAL_NODES = biRRT(start)
+    optimalPath = recordPath(START_NODES, GOAL_NODES)
 
     goal_reached = False
-    counter = 1
+    counter = 0
 
     while goal_reached == False:
 
-        start = START_NODES[counter].parent
+        pos = optimalPath[counter]
 
-        if start == GOAL_NODES[0]:
+        if pos == optimalPath[-1]:
+            animateRobot(pos) # Shows robot as green circle along optimal path
             goal_reached = True
             break
 
@@ -386,15 +412,17 @@ def main():
         updateObs() # Move stored position of obstacles
         obsDraw(pygame, screen) # Draw obstacles on map
         pathDraw(START_NODES,GOAL_NODES) # Draw last known optimal path
-        animateRobot(start) # Shows robot as green circle along optimal path
+        animateRobot(pos) # Shows robot as green circle along optimal path
         counter += 1
         time.sleep(0.1)
         # If any obstacle blocks the last known optimal path
         if checkCollision(START_NODES, OBS) == True:
-            START_NODES, GOAL_NODES = biRRT(start)
+            START_NODES, GOAL_NODES = biRRT(pos)
+            optimalPath = recordPath(START_NODES, GOAL_NODES)
             counter = 0
         if checkCollision(GOAL_NODES, OBS) == True:
-            START_NODES, GOAL_NODES = biRRT(start)
+            START_NODES, GOAL_NODES = biRRT(pos)
+            optimalPath = recordPath(START_NODES, GOAL_NODES)
             counter = 0
 
 
