@@ -25,12 +25,12 @@ For each rectangle obstacle, list with the following:
 """
 # Obstacles
 global OBS
-OBS = [[50,50,50,50]]
+OBS = [[200,100,50,50]]
 OBS.append([400,300,50,50])
-OBS.append([100,100,50,50])
+OBS.append([200,200,50,50])
 """
 For each rectangle obstacle, list with the following:
-    X units to move per tick
+    X units to move per tickhttps://stackoverflow.com/questions/16994243/pygame-not-filled-shapes-python
     Y units to move per tick
     X starting direction (1 for right, -1 for left)
     Y starting direction (1 for down, -1 for up)
@@ -38,9 +38,9 @@ For each rectangle obstacle, list with the following:
 Obstacles will bounce off boder and stay within map
 """
 # Motion informatoin
-OBS_motion = [[0,1,1,1]]
-OBS_motion.append([0,1,1,1])
-OBS_motion.append([1,0,1,1])
+OBS_motion = [[0,20,1,1]]
+OBS_motion.append([0,20,1,1])
+OBS_motion.append([20,0,1,1])
 
 def dir(obs,obs_motion,OBS):
     """
@@ -258,11 +258,14 @@ def checkCollision(nodes, OBS):
     """
     Checks if the optimal path is being blocked by an obstacle
     """
-    last_node = nodes[-1]
-    start = nodes[0]
-    while last_node != start:
-        if checkIntersect(last_node.parent, last_node, OBS) == True:
-            last_node = last_node.parent
+    # Count number of nodes
+    numNodes = 0
+    for n in nodes:
+        numNodes += 1 # number of obstacles
+    # Check if lines from one node to the next intersect with an obstacle
+    for index in range(0,numNodes - 1):
+        if checkIntersect(nodes[index],nodes[index + 1],OBS) == True:
+            continue
         else:
             return True
 
@@ -371,7 +374,14 @@ def animateRobot(x,y):
     """
     Shows a black circle as the robot moving along optimal path
     """
-    pygame.draw.ellipse(screen, black, [x,y,10,10])
+    pygame.draw.ellipse(screen, black, [x - 5,y - 5,10,10])
+    pygame.display.update()
+
+def animateSensor(x,y):
+    """
+    Shows a green circle as the robot's vision moving along optimal path
+    """
+    pygame.draw.ellipse(screen, green, [x - 10,y - 10,20,20], 3)
     pygame.display.update()
 
 
@@ -406,8 +416,8 @@ def main():
     screen.fill(white)
     obsDraw(pygame, screen)
 
-    start = Node(0.0, 0.0)  # Start in the corner
-    goal = Node(320, 380.0)
+    start = Node(0.0, 0.0)  # Start in top-left corner
+    goal = Node(640, 480.0) # End in bottom-right corner
 
     # Draw start and goal nodes
 
@@ -444,27 +454,26 @@ def main():
             obsDraw(pygame, screen) # Draw obstacles on map
             pathDraw(START_NODES,GOAL_NODES) # Draw last known optimal path
             startGoalDraw(start,goal) # Draw start and goal positions
-            xPos = robotStart[0] + (robotEnd[0] - robotStart[0])*(inc/10)
-            yPos = robotStart[1] + (robotEnd[1] - robotStart[1])*(inc/10)
-            print(inc)
-            print(robotStart[0])
-            print((robotEnd[0] - robotStart[0])*(inc/10))
-            print(xPos, yPos)
+            xPos = robotStart[0] + (robotEnd[0] - robotStart[0])*(inc/10.0)
+            yPos = robotStart[1] + (robotEnd[1] - robotStart[1])*(inc/10.0)
             animateRobot(xPos,yPos) # Shows robot as green circle along optimal path
+
+            # Track path in front of robot
+            frontPath = [optimalPath[counter]]
+            animateSensor(optimalPath[counter].x,optimalPath[counter].y) # shows path in front of robot
+            for distance in range(1,3):
+                frontPath.append(optimalPath[counter+distance])
+                animateSensor(optimalPath[counter+distance].x,optimalPath[counter+distance].y)
+
+            # If any obstacle blocks path in front of robot
+            if checkCollision(frontPath, OBS) == True:
+                start = Node(xPos,yPos)
+                START_NODES, GOAL_NODES = biRRT(start,goal)
+                optimalPath = recordPath(START_NODES, GOAL_NODES)
+                counter = 0
+                break
+
             time.sleep(0.1)
-
-            # If any obstacle blocks the last known optimal path
-            if checkCollision(START_NODES, OBS) == True:
-                START_NODES, GOAL_NODES = biRRT(pos,goal)
-                optimalPath = recordPath(START_NODES, GOAL_NODES)
-                counter = 0
-                break
-            if checkCollision(GOAL_NODES, OBS) == True:
-                START_NODES, GOAL_NODES = biRRT(pos,goal)
-                optimalPath = recordPath(START_NODES, GOAL_NODES)
-                counter = 0
-                break
-
             allowExit()
 
         counter += 1
