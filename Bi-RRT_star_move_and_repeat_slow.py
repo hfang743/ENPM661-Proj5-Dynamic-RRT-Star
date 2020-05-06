@@ -249,9 +249,10 @@ def main():
     screen.fill(white)
     obsDraw(pygame, screen)
 
-    start = Node(0.0, 0.0)  # Start in the corner
-    goal = Node(630.0, 200.0)
-
+    start = Node(0, 0)  # Start in the corner
+    goal = Node(630, 200)
+    pygame.draw.circle(screen, (254, 121, 209), [start.x, start.y], 10, 0)
+    pygame.draw.circle(screen, (0, 255, 0), [goal.x, goal.y], 10, 0)
     start_nodes = []
     goal_nodes = []
 
