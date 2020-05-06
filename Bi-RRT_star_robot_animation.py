@@ -203,18 +203,18 @@ def ccw(A, B, C):
 
 # Return true if line segments AB and CD intersect
 def checkIntersect(nodeA, nodeB, OBS):
-    A = [nodeA.x, nodeA.y]
-    B = [nodeB.x, nodeB.y]
+    A = (nodeA.x, nodeA.y)
+    B = (nodeB.x, nodeB.y)
     for o in OBS:
-        obs = [o[0], o[1], o[0] + o[2], o[1] + o[3]]
-        C1 = [obs[0], obs[1]]
-        D1 = [obs[0], obs[3]]
-        C2 = [obs[0], obs[1]]
-        D2 = [obs[2], obs[1]]
-        C3 = [obs[2], obs[3]]
-        D3 = [obs[2], obs[1]]
-        C4 = [obs[2], obs[3]]
-        D4 = [obs[0], obs[3]]
+        obs = (o[0], o[1], o[0] + o[2], o[1] + o[3])
+        C1 = (obs[0], obs[1])
+        D1 = (obs[0], obs[3])
+        C2 = (obs[0], obs[1])
+        D2 = (obs[2], obs[1])
+        C3 = (obs[2], obs[3])
+        D3 = (obs[2], obs[1])
+        C4 = (obs[2], obs[3])
+        D4 = (obs[0], obs[3])
         inst1 = ccw(A, C1, D1) != ccw(B, C1, D1) and ccw(A, B, C1) != ccw(A, B, D1)
         inst2 = ccw(A, C2, D2) != ccw(B, C2, D2) and ccw(A, B, C2) != ccw(A, B, D2)
         inst3 = ccw(A, C3, D3) != ccw(B, C3, D3) and ccw(A, B, C3) != ccw(A, B, D3)
@@ -254,19 +254,34 @@ def drawPath(nodes, pygame, screen):
         pygame.draw.line(screen, red, [last_node.x, last_node.y], [last_node.parent.x, last_node.parent.y], 5)
         last_node = last_node.parent
 
-def checkCollision(nodes, OBS):
+def checkCollision(robot, OBS):
     """
-    Checks if the optimal path is being blocked by an obstacle
+    Checks if robot sensor range sees an obstacle
+    Returns true if square range around robot intersects with an obstacle
     """
-    # Count number of nodes
-    numNodes = 0
-    for n in nodes:
-        numNodes += 1 # number of obstacles
-    # Check if lines from one node to the next intersect with an obstacle
-    for index in range(0,numNodes - 1):
-        if checkIntersect(nodes[index],nodes[index + 1],OBS) == True:
-            continue
-        else:
+    # Import robot parameters
+    startX = robot[0]
+    startY = robot[1]
+    length = robot[2]
+    width = robot[3]
+
+    # Check if robot range reaches edge of another obstacle
+    for o in OBS:
+        # Check top-left corner
+        if (startX - length) > o[0] and (startY - width) > o[1]\
+        and (startX - length) < (o[0] + o[2]) and (startY - width) < (o[1] + o[3]):
+            return True
+        # Check top-right corner
+        if (startX + length) > o[0] and (startY - width) > o[1]\
+        and (startX + length) < (o[0] + o[2]) and (startY - width) < (o[1] + o[3]):
+            return True
+        # Check bottom-left corner
+        if (startX - length) > o[0] and (startY + width) > o[1]\
+        and (startX - length) < (o[0] + o[2]) and (startY + width) < (o[1] + o[3]):
+            return True
+        # Check bottom-right corner
+        if (startX + length) > o[0] and (startY + width) > o[1]\
+        and (startX + length) < (o[0] + o[2]) and (startY + width) < (o[1] + o[3]):
             return True
 
     return False
@@ -377,11 +392,11 @@ def animateRobot(x,y):
     pygame.draw.ellipse(screen, black, [x - 5,y - 5,10,10])
     pygame.display.update()
 
-def animateSensor(x,y):
+def animateSensor(x,y,length,width):
     """
-    Shows a green circle as the robot's vision moving along optimal path
+    Shows a green square as the robot's vision moving along optimal path
     """
-    pygame.draw.ellipse(screen, green, [x - 10,y - 10,20,20], 3)
+    pygame.draw.rect(screen, green, [x - length, y - width, length*2, width*2], 2 )
     pygame.display.update()
 
 
@@ -448,25 +463,25 @@ def main():
         robotStart = [pos.x,pos.y] # Robot at current node
         robotEnd = [optimalPath[counter + 1].x, optimalPath[counter + 1].y] # Robot traveling to next node
 
-        for inc in range(1,10):
+        # Define an integer for robot speed (1 is fastest, higher numbers slow down robot)
+        robotSpeed = 6
+        for inc in range(1,robotSpeed):
             screen.fill(white)
             updateObs() # Move stored position of obstacles
             obsDraw(pygame, screen) # Draw obstacles on map
             pathDraw(START_NODES,GOAL_NODES) # Draw last known optimal path
             startGoalDraw(start,goal) # Draw start and goal positions
-            xPos = robotStart[0] + (robotEnd[0] - robotStart[0])*(inc/10.0)
-            yPos = robotStart[1] + (robotEnd[1] - robotStart[1])*(inc/10.0)
+            xPos = robotStart[0] + (robotEnd[0] - robotStart[0])*(inc/(robotSpeed*1.0))
+            yPos = robotStart[1] + (robotEnd[1] - robotStart[1])*(inc/(robotSpeed*1.0))
             animateRobot(xPos,yPos) # Shows robot as green circle along optimal path
 
             # Track path in front of robot
-            frontPath = [optimalPath[counter]]
-            animateSensor(optimalPath[counter].x,optimalPath[counter].y) # shows path in front of robot
-            for distance in range(1,3):
-                frontPath.append(optimalPath[counter+distance])
-                animateSensor(optimalPath[counter+distance].x,optimalPath[counter+distance].y)
-
+            length = 25
+            width = 25
+            animateSensor(xPos,yPos,length,width) # shows path in front of robot
             # If any obstacle blocks path in front of robot
-            if checkCollision(frontPath, OBS) == True:
+            if checkCollision([xPos,yPos,length,width], OBS) == True:
+                time.sleep(0.1)
                 start = Node(xPos,yPos)
                 START_NODES, GOAL_NODES = biRRT(start,goal)
                 optimalPath = recordPath(START_NODES, GOAL_NODES)
