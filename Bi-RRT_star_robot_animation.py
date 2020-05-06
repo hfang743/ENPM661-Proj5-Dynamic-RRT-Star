@@ -250,7 +250,6 @@ def extend(nodes, screen, black):
 def drawPath(nodes, pygame, screen):
     last_node = nodes[-1]
     start = nodes[0]
-    red = 255, 10, 10
     while last_node != start:
         pygame.draw.line(screen, red, [last_node.x, last_node.y], [last_node.parent.x, last_node.parent.y], 5)
         last_node = last_node.parent
@@ -277,11 +276,10 @@ def pathDraw(startNodes,goalNodes):
     drawPath(goalNodes, pygame, screen)
     pygame.display.update()
 
-def biRRT(start):
+def biRRT(start,goal):
     """
     Runs BiRRT search and returns optimal path
     """
-    goal = Node(630.0, 200.0)
 
     start_nodes = []
     goal_nodes = []
@@ -292,6 +290,7 @@ def biRRT(start):
     flag = False
     i = 0
     start_time = time.time()
+
     while i < NUMNODES and flag != True:
 
         start_nodes = extend(start_nodes, screen, black)
@@ -368,15 +367,28 @@ def recordPath(startNodes,goalNodes):
     return path
 
 
-def animateRobot(node):
+def animateRobot(x,y):
     """
-    Shows a green circle as the robot moving along optimal path
+    Shows a black circle as the robot moving along optimal path
     """
-    x = node.x
-    y = node.y
-    pygame.draw.ellipse(screen, green, [x,y,10,10])
+    pygame.draw.ellipse(screen, black, [x,y,10,10])
     pygame.display.update()
 
+
+def startGoalDraw(start,goal):
+    """
+    Draw green circle for start
+    Draw red circle for goal
+    """
+    pygame.draw.ellipse(screen, green, [start.x - 10,start.y - 10,20,20])
+    pygame.draw.ellipse(screen, red, [goal.x - 10,goal.y - 10,20,20])
+    pygame.display.update()
+
+def allowExit():
+    """Allows user to press ESC to exit"""
+    for e in pygame.event.get():
+        if e.type == QUIT or (e.type == KEYUP and e.key == K_ESCAPE):
+            sys.exit("Leaving because you requested it.")
 
 def main():
     pygame.init()
@@ -386,14 +398,21 @@ def main():
     global white
     global black
     global green
+    global red
     white = 255, 255, 255
     black = 20, 20, 40
     green = 0, 255, 0
+    red = 255, 10, 10
     screen.fill(white)
     obsDraw(pygame, screen)
 
     start = Node(0.0, 0.0)  # Start in the corner
-    START_NODES, GOAL_NODES = biRRT(start)
+    goal = Node(320, 380.0)
+
+    # Draw start and goal nodes
+
+
+    START_NODES, GOAL_NODES = biRRT(start,goal)
     optimalPath = recordPath(START_NODES, GOAL_NODES)
 
     goal_reached = False
@@ -404,32 +423,54 @@ def main():
         pos = optimalPath[counter]
 
         if pos == optimalPath[-1]:
-            animateRobot(pos) # Shows robot as green circle along optimal path
+            screen.fill(white)
+            updateObs() # Move stored position of obstacles
+            obsDraw(pygame, screen) # Draw obstacles on map
+            pathDraw(START_NODES,GOAL_NODES) # Draw last known optimal path
+            startGoalDraw(start,goal) # Draw start and goal positions
+            animateRobot(goal.x,goal.y) # Shows robot as green circle along optimal path
             goal_reached = True
+            print("Goal reached. Close window to exit.")
             break
 
-        screen.fill(white)
-        updateObs() # Move stored position of obstacles
-        obsDraw(pygame, screen) # Draw obstacles on map
-        pathDraw(START_NODES,GOAL_NODES) # Draw last known optimal path
-        animateRobot(pos) # Shows robot as green circle along optimal path
+
+        # Move robot from current node to next node
+        robotStart = [pos.x,pos.y] # Robot at current node
+        robotEnd = [optimalPath[counter + 1].x, optimalPath[counter + 1].y] # Robot traveling to next node
+
+        for inc in range(1,10):
+            screen.fill(white)
+            updateObs() # Move stored position of obstacles
+            obsDraw(pygame, screen) # Draw obstacles on map
+            pathDraw(START_NODES,GOAL_NODES) # Draw last known optimal path
+            startGoalDraw(start,goal) # Draw start and goal positions
+            xPos = robotStart[0] + (robotEnd[0] - robotStart[0])*(inc/10)
+            yPos = robotStart[1] + (robotEnd[1] - robotStart[1])*(inc/10)
+            print(inc)
+            print(robotStart[0])
+            print((robotEnd[0] - robotStart[0])*(inc/10))
+            print(xPos, yPos)
+            animateRobot(xPos,yPos) # Shows robot as green circle along optimal path
+            time.sleep(0.1)
+
+            # If any obstacle blocks the last known optimal path
+            if checkCollision(START_NODES, OBS) == True:
+                START_NODES, GOAL_NODES = biRRT(pos,goal)
+                optimalPath = recordPath(START_NODES, GOAL_NODES)
+                counter = 0
+                break
+            if checkCollision(GOAL_NODES, OBS) == True:
+                START_NODES, GOAL_NODES = biRRT(pos,goal)
+                optimalPath = recordPath(START_NODES, GOAL_NODES)
+                counter = 0
+                break
+
+            allowExit()
+
         counter += 1
-        time.sleep(0.1)
-        # If any obstacle blocks the last known optimal path
-        if checkCollision(START_NODES, OBS) == True:
-            START_NODES, GOAL_NODES = biRRT(pos)
-            optimalPath = recordPath(START_NODES, GOAL_NODES)
-            counter = 0
-        if checkCollision(GOAL_NODES, OBS) == True:
-            START_NODES, GOAL_NODES = biRRT(pos)
-            optimalPath = recordPath(START_NODES, GOAL_NODES)
-            counter = 0
 
 
-
-        for e in pygame.event.get():
-            if e.type == QUIT or (e.type == KEYUP and e.key == K_ESCAPE):
-                sys.exit("Leaving because you requested it.")
+        allowExit()
 
 
 
