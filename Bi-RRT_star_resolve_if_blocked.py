@@ -25,9 +25,9 @@ For each rectangle obstacle, list with the following:
 """
 # Obstacles
 global OBS
-OBS = [[50,50,100,100]]
-OBS.append([400,200,100,100])
-OBS.append([200,100,100,100])
+OBS = [[50,50,50,50]]
+OBS.append([400,300,50,50])
+OBS.append([100,100,50,50])
 """
 For each rectangle obstacle, list with the following:
     X units to move per tick
@@ -42,7 +42,7 @@ OBS_motion = [[0,1,1,1]]
 OBS_motion.append([0,1,1,1])
 OBS_motion.append([1,0,1,1])
 
-def dir(obs,obs_motion):
+def dir(obs,obs_motion,OBS):
     """
     Returns an array to change moving obstacle direction once edge of map is reached
 
@@ -83,9 +83,34 @@ def dir(obs,obs_motion):
     if (startY + lengthY + moveY) > YDIM:
         dirY = -1
 
+    # Check if obstacle reaches edge of another obstacle
+    gap = 2
+    for o in OBS:
+        if o != obs:
+            # Check top-left corner
+            if (startX + moveX) > o[0] and (startY + moveY) > o[1]\
+            and (startX + moveX) < (o[0] + o[2]) and (startY + moveY) < (o[1] + o[3]):
+                dirX *= -1
+                dirY *= -1
+            # Check top-right corner
+            if (startX + moveX + lengthX) > o[0] and (startY + moveY) > o[1]\
+            and (startX + moveX + lengthX) < (o[0] + o[2]) and (startY + moveY) < (o[1] + o[3]):
+                dirX *= -1
+                dirY *= -1
+            # Check bottom-left corner
+            if (startX + moveX) > o[0] and (startY + moveY + lengthY) > o[1]\
+            and (startX + moveX) < (o[0] + o[2]) and (startY + moveY + lengthY) < (o[1] + o[3]):
+                dirX *= -1
+                dirY *= -1
+            # Check bottom-right corner
+            if (startX + moveX + lengthX) > o[0] and (startY + moveY + lengthY) > o[1]\
+            and (startX + moveX + lengthX) < (o[0] + o[2]) and (startY + moveY + lengthY) < (o[1] + o[3]):
+                dirX *= -1
+                dirY *= -1
+
     return [dirX,dirY]
 
-def move(obs,obs_motion):
+def move(obs,obs_motion,OBS):
     """
     Moves obstacles and returns updated positions
     """
@@ -99,7 +124,7 @@ def move(obs,obs_motion):
     moveY = obs_motion[1]
 
     # Change direction if obstacle reached end of map
-    [dirX,dirY] = dir(obs,obs_motion)
+    [dirX,dirY] = dir(obs,obs_motion,OBS)
 
     startX += moveX*dirX
     startY += moveY*dirY
@@ -122,7 +147,7 @@ def updateObs():
         numObs += 1 # number of obstacles
     # Update moving obstacle position
     for i in range(0, numObs):
-        OBS[i], OBS_motion[i] = move(OBS[i],OBS_motion[i])
+        OBS[i], OBS_motion[i] = move(OBS[i],OBS_motion[i],OBS)
 
 
 
