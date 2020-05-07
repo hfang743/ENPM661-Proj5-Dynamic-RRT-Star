@@ -13,12 +13,12 @@ import time
 
 # ===== Constants =====
 XDIM = 640
-YDIM = 200
+YDIM = 480
 WINSIZE = [XDIM, YDIM]
 EPSILON = 10.0
 NUMNODES = 5000 #samples/iterations
 RADIUS = 30.0
-TARGET_RADIUS = 10.0
+
 
 # ===== Dynamic Obstacles =====
 """
@@ -30,8 +30,11 @@ For each rectangle obstacle, list with the following:
 """
 # Obstacles
 global OBS
-OBS = [[XDIM/3,YDIM/3,50,50]]
-OBS.append([XDIM*2/3,YDIM*2/3,50,50])
+OBS = [[50,50,50,50]]
+OBS.append([150,150,50,50])
+OBS.append([250,250,50,50])
+OBS.append([350,350,50,50])
+OBS.append([450,250,50,50])
 
 """
 For each rectangle obstacle, list with the following:
@@ -44,6 +47,9 @@ Obstacles will bounce off boder and stay within map
 """
 # Motion informatoin
 OBS_motion = [[0,2,1,-1]]
+OBS_motion.append([0,2,1,-1])
+OBS_motion.append([0,2,1,-1])
+OBS_motion.append([0,2,1,1])
 OBS_motion.append([0,2,1,1])
 
 
@@ -490,8 +496,8 @@ def main():
     obsDraw(pygame, screen)
 
     # Start and goal positions
-    start = Node(25.0, 75.0)  # Start in top-left corner
-    goal = Node(625, 75.0) # End in bottom-right corner
+    start = Node(25.0, 25.0)  # Start in top-left corner
+    goal = Node(525, 350.0) # End in bottom-right corner
 
     # Record start time
     startTime = time.time()
@@ -572,7 +578,7 @@ def main():
             # Track path in front of robot
             # Sensor 1
             r1 = 50
-            sensorX = xPos + r1/3
+            sensorX = xPos + r1/3 + 10
             sensorY = yPos
             sensor1 = [sensorX,sensorY,r1]
             animateSensor(sensorX,sensorY,r1)
@@ -585,13 +591,14 @@ def main():
                 print("OBSTACLE DETECTED. DIVERTING.")
                 robotInRegion = True
                 newStart = Node(xPos,yPos) # New start position is robot's current position
-                nodesAhead = 10
+                nodesAhead = 12
                 newCounter = counter + nodesAhead # Choosing a node further down optimal path
                 # Check if # nodes ahead is inside obstacle
-                nodeSensor = [optimalPath[counter].x,optimalPath[counter].y,1] # Mock sensor with radius 1
+                nodeSensor = [optimalPath[newCounter].x,optimalPath[newCounter].y,r1] # Mock sensor
                 while checkCollision(nodeSensor,OBS) == True:
                     nodesAhead += 1
                     newCounter = counter + nodesAhead
+                    nodeSensor = [optimalPath[newCounter].x,optimalPath[newCounter].y,r1]
                 # Setting a temporary new goal for robot to avoid obstacle
                 newGoal = optimalPath[newCounter]
                 # Finding optimal path from robot to temp new goal
