@@ -439,7 +439,7 @@ def main():
     obsDraw(pygame, screen)
 
     start = Node(0.0, 0.0)  # Start in top-left corner
-    goal = Node(640, 480.0) # End in bottom-right corner
+    goal = Node(525, 350.0) # End in bottom-right corner
 
     # Draw start and goal nodes
 

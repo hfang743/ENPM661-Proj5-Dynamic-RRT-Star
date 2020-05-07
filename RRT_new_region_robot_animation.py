@@ -385,8 +385,8 @@ def RRT(start,goal):
     else:
         print("Path not found. Try increasing the number of iterations")
 
-
-    return nodes
+    totalNodes = i
+    return nodes, totalNodes
 
 
 def recordPath(nodes):
@@ -464,9 +464,13 @@ def main():
     start = Node(25.0, 25.0)  # Start in top-left corner
     goal = Node(625, 450.0) # End in bottom-right corner
 
+    startTime = time.time()
+    totalNodes = 0
+
     # Draw start and goal nodes
     startGoalDraw(start,goal)
-    PATH_NODES = RRT(goal,start) # solve from goal to robot
+    PATH_NODES, numNodes = RRT(goal,start) # solve from goal to robot
+    totalNodes += numNodes
     optimalPath = recordPath(PATH_NODES)
 
     goal_reached = False
@@ -483,7 +487,14 @@ def main():
             startGoalDraw(start,goal) # Draw start and goal positions
             animateRobot(goal.x,goal.y) # Shows robot as green circle along optimal path
             goal_reached = True
-            print("Goal reached. Close window to exit.")
+            endTime = time.time()
+            totalTime = endTime - startTime
+            print("")
+            print("===== GOAL REACHED =====")
+            print("Total time: " + str(totalTime) + " seconds")
+            print("Total cost: " + str(totalCost))
+            print("Total nodes explored: " + str(totalNodes))
+            print("Close window to exit.")
             break
 
 
@@ -505,6 +516,7 @@ def main():
             xPos = robotStart[0] + (robotEnd[0] - robotStart[0])*(inc/(robotSpeed*1.0))
             yPos = robotStart[1] + (robotEnd[1] - robotStart[1])*(inc/(robotSpeed*1.0))
             animateRobot(xPos,yPos) # Shows robot as green circle along optimal path
+            totalCost += (robotEnd[0] - robotStart[0])*(inc/(robotSpeed*1.0))
 
             # Track path in front of robot
             # Sensor 1
@@ -520,7 +532,8 @@ def main():
                 print("OBSTACLE DETECTED. EXPLORING NEW PATH TO GOAL.")
                 newGoal = Node(newGoalX,newGoalY)
                 newStart = Node(xPos,yPos)
-                NEW_PATH_NODES = RRT(newGoal,newStart)
+                NEW_PATH_NODES, numNodes = RRT(newGoal,newStart)
+                totalNodes += numNodes
                 newPath = recordPath(NEW_PATH_NODES)
                 drawNewPath(NEW_PATH_NODES, pygame, screen) # Draw last known optimal path
                 counter = 0 # Reset counter of nodes for optimal path

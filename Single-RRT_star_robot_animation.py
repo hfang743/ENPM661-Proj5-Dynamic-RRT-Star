@@ -360,8 +360,9 @@ def RRT_Star(start,goal):
     else:
         print("Path not found. Try increasing the number of iterations")
 
+    totalNodes = i
 
-    return nodes
+    return nodes, totalNodes
 
 
 def recordPath(nodes):
@@ -427,16 +428,19 @@ def main():
     obsDraw(pygame, screen)
 
     start = Node(5.0, 5.0)  # Start in top-left corner
-    goal = Node(550, 350.0) # End in bottom-right corner
+    goal = Node(525, 350.0) # End in bottom-right corner
 
-    # Draw start and goal nodes
+    startTime = time.time()
+    totalNodes = 0
 
+    PATH_NODES, numNodes = RRT_Star(start,goal)
+    totalNodes += numNodes
 
-    PATH_NODES = RRT_Star(start,goal)
     optimalPath = recordPath(PATH_NODES)
 
     goal_reached = False
     counter = 0
+    totalCost = 0
 
     while goal_reached == False:
 
@@ -450,7 +454,14 @@ def main():
             startGoalDraw(start,goal) # Draw start and goal positions
             animateRobot(goal.x,goal.y) # Shows robot as green circle along optimal path
             goal_reached = True
-            print("Goal reached. Close window to exit.")
+            endTime = time.time()
+            totalTime = endTime - startTime
+            print("")
+            print("===== GOAL REACHED =====")
+            print("Total time: " + str(totalTime) + " seconds")
+            print("Total cost: " + str(totalCost))
+            print("Total nodes explored: " + str(totalNodes))
+            print("Close window to exit.")
             break
 
 
@@ -462,7 +473,7 @@ def main():
         counter += 1
 
         # Define an integer for robot speed (1 is fastest, higher numbers slow down robot)
-        robotSpeed = 2
+        robotSpeed = 10
         for inc in range(1,robotSpeed):
             screen.fill(white)
             updateObs() # Move stored position of obstacles
@@ -472,6 +483,7 @@ def main():
             xPos = robotStart[0] + (robotEnd[0] - robotStart[0])*(inc/(robotSpeed*1.0))
             yPos = robotStart[1] + (robotEnd[1] - robotStart[1])*(inc/(robotSpeed*1.0))
             animateRobot(xPos,yPos) # Shows robot as green circle along optimal path
+            totalCost += (robotEnd[0] - robotStart[0])*(inc/(robotSpeed*1.0))
 
             # Track path in front of robot
             # Sensor 1
@@ -483,7 +495,8 @@ def main():
             if checkCollision(sensor1, OBS) == True:
                 print("OBSTACLE DETECTED. EXPLORING NEW PATH TO GOAL.")
                 start = Node(xPos,yPos)
-                PATH_NODES = RRT_Star(start,goal)
+                PATH_NODES, numNodes = RRT_Star(start,goal)
+                totalNodes += numNodes
                 optimalPath = recordPath(PATH_NODES)
                 counter = 0 # Reset counter of nodes for optimal path
                 pos = optimalPath[counter]
