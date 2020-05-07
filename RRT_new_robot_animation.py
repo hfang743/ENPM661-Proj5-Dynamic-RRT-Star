@@ -13,7 +13,7 @@ WINSIZE = [XDIM, YDIM]
 EPSILON = 10.0
 NUMNODES = 5000 #samples/iterations
 RADIUS = 30.0
-TARGET_RADIUS = 200.0
+
 
 # ===== Dynamic Obstacles =====
 """
