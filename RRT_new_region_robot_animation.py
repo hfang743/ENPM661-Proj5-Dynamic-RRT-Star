@@ -1,19 +1,24 @@
-"""
-implementation of paper by Sertac Karaman in 2010
-http://roboticsproceedings.org/rss06/p34.pdf
-"""
+# ENPM661
+# Project 5
+# Jaad Lepak
+# Haixiang Fang
+# Anshuman Singh
+# ===== ===== =====
+
+# ===== Libraries =====
 import sys, random, math, pygame
 from pygame.locals import *
 from math import sqrt,cos,sin,atan2
 import time
-#constants
+
+# ===== Constants =====
 XDIM = 640
-YDIM = 480
+YDIM = 200
 WINSIZE = [XDIM, YDIM]
 EPSILON = 10.0
 NUMNODES = 5000 #samples/iterations
 RADIUS = 30.0
-TARGET_RADIUS = 200.0
+TARGET_RADIUS = 10.0
 
 # ===== Dynamic Obstacles =====
 """
@@ -25,11 +30,8 @@ For each rectangle obstacle, list with the following:
 """
 # Obstacles
 global OBS
-OBS = [[150,150,50,50]]
-OBS.append([250,250,50,50])
-OBS.append([350,350,50,50])
-OBS.append([450,250,50,50])
-OBS.append([550,150,50,50])
+OBS = [[XDIM/3,YDIM/3,50,50]]
+OBS.append([XDIM*2/3,YDIM*2/3,50,50])
 
 """
 For each rectangle obstacle, list with the following:
@@ -42,9 +44,6 @@ Obstacles will bounce off boder and stay within map
 """
 # Motion informatoin
 OBS_motion = [[0,2,1,-1]]
-OBS_motion.append([0,2,1,-1])
-OBS_motion.append([0,2,1,-1])
-OBS_motion.append([0,2,1,1])
 OBS_motion.append([0,2,1,1])
 
 
@@ -79,14 +78,18 @@ def dir(obs,obs_motion,OBS):
     dirX = obs_motion[2]
     dirY = obs_motion[3]
 
-    # Check if obstacle reached edge of map
-    if (startX + moveX) < 0:
+    # Check if obstacle reached edge of defined area
+    xMin = 0
+    xMax = XDIM
+    yMin = 0
+    yMax = YDIM
+    if (startX + moveX) < xMin:
         dirX = 1
-    if (startX + lengthX + moveX) > XDIM:
+    if (startX + lengthX + moveX) > xMax:
         dirX = -1
-    if (startY + moveY) < 0:
+    if (startY + moveY) < yMin:
         dirY = 1
-    if (startY + lengthY + moveY) > YDIM:
+    if (startY + lengthY + moveY) > yMax:
         dirY = -1
 
     # Check if obstacle reaches edge of another obstacle
@@ -156,7 +159,7 @@ def updateObs():
         OBS[i], OBS_motion[i] = move(OBS[i],OBS_motion[i],OBS)
 
 
-
+# ===== Node Class =====
 class Node:
     def __init__(self, xcoord=0, ycoord=0, cost=0, parent=None):
         self.x = xcoord
@@ -166,6 +169,9 @@ class Node:
 
 
 def obsDraw(pygame, screen):
+    """
+    Draws all obstacles
+    """
     blue = (0, 0, 255)
     for o in OBS:
         pygame.draw.rect(screen, blue, o)
@@ -174,10 +180,16 @@ def obsDraw(pygame, screen):
 
 
 def dist(p1, p2):
+    """
+    Calculates the distances between two points
+    """
     return sqrt((p1[0] - p2[0]) ** 2 + (p1[1] - p2[1]) ** 2)
 
 
 def step_from_to(p1, p2):
+    """
+    Used to interpolate between two points
+    """
     if dist(p1, p2) < EPSILON:
         return p2
     else:
@@ -186,6 +198,9 @@ def step_from_to(p1, p2):
 
 
 def chooseParent(nn, newnode, nodes):
+    """
+    Chooses a parent node for a newly found node
+    """
     for p in nodes:
         if checkIntersect(p, newnode, OBS) and dist([p.x, p.y], [newnode.x, newnode.y]) < RADIUS and p.cost + dist(
                 [p.x, p.y], [newnode.x, newnode.y]) < nn.cost + dist([nn.x, nn.y], [newnode.x, newnode.y]):
@@ -196,6 +211,9 @@ def chooseParent(nn, newnode, nodes):
 
 
 def nearest_neighbor(nodes, q_target):
+    """
+    Connects the nodes in the branch
+    """
     q_near = nodes[0]
     for p in nodes:
         if dist([p.x, p.y], [q_target.x, q_target.y]) < dist([q_near.x, q_near.y], [q_target.x, q_target.y]):
@@ -204,11 +222,20 @@ def nearest_neighbor(nodes, q_target):
 
 
 def ccw(A, B, C):
+    """
+    A, B, C are three x,y coordinate positions
+    """
     return (C[1] - A[1]) * (B[0] - A[0]) > (B[1] - A[1]) * (C[0] - A[0])
 
 
 # Return true if line segments AB and CD intersect
 def checkIntersect(nodeA, nodeB, OBS):
+    """
+    Returns true if AB and CD intersect with any Obstacles
+    AB is a line drawn from one point to another
+    A and B are given as nodes
+    CD represents each side of each obstacle
+    """
     A = (nodeA.x, nodeA.y)
     B = (nodeB.x, nodeB.y)
     for o in OBS:
@@ -235,6 +262,9 @@ def checkIntersect(nodeA, nodeB, OBS):
 
 
 def extend(nodes, screen, black):
+    """
+    Extends random nodes used in the RRT search
+    """
     rand = Node(random.random() * XDIM, random.random() * YDIM)
     nn = nearest_neighbor(nodes, rand)
     interpolatedNode = step_from_to([nn.x, nn.y], [rand.x, rand.y])
@@ -248,12 +278,15 @@ def extend(nodes, screen, black):
 
     for e in pygame.event.get():
         if e.type == QUIT or (e.type == KEYUP and e.key == K_ESCAPE):
-            sys.exit("Leaving because you requested it.")
+            sys.exit("ESC key pressed. Exiting program.")
 
     return nodes
 
 
 def drawPath(nodes, pygame, screen):
+    """
+    Draws the optimal path
+    """
     last_node = nodes[-1]
     start = nodes[0]
     while last_node != start:
@@ -261,71 +294,58 @@ def drawPath(nodes, pygame, screen):
         last_node = last_node.parent
 
 def drawNewPath(nodes, pygame, screen):
+    """
+    Draws the rewired path within region around robot
+    """
     last_node = nodes[-1]
     start = nodes[0]
     while last_node != start:
         pygame.draw.line(screen, green, [last_node.x, last_node.y], [last_node.parent.x, last_node.parent.y], 5)
         last_node = last_node.parent
 
+def checkCircle(x,y,cirX,cirY,cirR):
+    """
+    Returns true if point is inside circle
+    """
+    # NOT EXACT EQUATION FOR CIRCLE
+    # Radius taken by half to match animation
+    if ((x - cirX)**2 + (y - cirY)**2) <= (cirR/2)**2:
+         return True
+    else:
+         return False
+
 def checkCollision(robot, OBS):
     """
     Checks if robot sensor range sees an obstacle
-    Returns true if square range around robot intersects with an obstacle
+    Returns true if circle range around robot intersects with an obstacle's corner
     """
     # Import robot parameters
     startX = robot[0]
     startY = robot[1]
-    length = robot[2]
-    width = robot[3]
-
-    A1 = startX - length
-    B1 = startY - width
-    A2 = startX + length
-    B2 = startY - width
-    A3 = startX + length
-    B3 = startY + width
-    A4 = startX - length
-    B4 = startY + width
-
-    corner1 = Node(A1,B1)
-    corner2 = Node(A2,B2)
-    corner3 = Node(A3,B3)
-    corner4 = Node(A4,B4)
-
-    if checkIntersect(corner1, corner2, OBS) == False:
-        return True
-
-    if checkIntersect(corner2, corner3, OBS) == False:
-        return True
-
-    if checkIntersect(corner3, corner4, OBS) == False:
-        return True
-
-    if checkIntersect(corner4, corner1, OBS) == False:
-        return True
+    radius = robot[2]
 
     # Check if robot range reaches edge of another obstacle
     for o in OBS:
+        obs = (o[0], o[1], o[0] + o[2], o[1] + o[3])
         # Check top-left corner
-        if (startX - length) >= o[0] and (startY - width) >= o[1]\
-        and (startX - length) <= (o[0] + o[2]) and (startY - width) <= (o[1] + o[3]):
+        if checkCircle(obs[0],obs[1],startX,startY,radius) == True:
             return True
         # Check top-right corner
-        if (startX + length) >= o[0] and (startY - width) >= o[1]\
-        and (startX + length) <= (o[0] + o[2]) and (startY - width) <= (o[1] + o[3]):
-            return True
-        # Check bottom-left corner
-        if (startX - length) >= o[0] and (startY + width) >= o[1]\
-        and (startX - length) <= (o[0] + o[2]) and (startY + width) <= (o[1] + o[3]):
+        if checkCircle(obs[2],obs[1],startX,startY,radius) == True:
             return True
         # Check bottom-right corner
-        if (startX + length) >= o[0] and (startY + width) >= o[1]\
-        and (startX + length) <= (o[0] + o[2]) and (startY + width) <= (o[1] + o[3]):
+        if checkCircle(obs[2],obs[3],startX,startY,radius) == True:
+            return True
+        # Check bottom-left corner
+        if checkCircle(obs[0],obs[3],startX,startY,radius) == True:
             return True
 
     return False
 
 def checkgoal(newnode, goal):
+    """
+    Check if node is close to goal and within threshold
+    """
     if dist([goal.x, goal.y], [newnode.x, newnode.y]) < RADIUS and checkIntersect(newnode, goal, OBS):
         return True
 
@@ -367,7 +387,7 @@ def RRT(start,goal):
 
         for e in pygame.event.get():
             if e.type == QUIT or (e.type == KEYUP and e.key == K_ESCAPE):
-                sys.exit("Leaving because you requested it.")
+                sys.exit("ESC key pressed. Exiting program..")
 
     if goal in nodes:
         end_time = time.time()
@@ -412,11 +432,12 @@ def animateRobot(x,y):
     pygame.draw.ellipse(screen, black, [x - 5,y - 5,10,10])
     pygame.display.update()
 
-def animateSensor(x,y,length,width):
+def animateSensor(x,y,radius):
     """
-    Shows a green square as the robot's vision moving along optimal path
+    Shows a green circle as the robot's vision moving along optimal path
     """
-    pygame.draw.rect(screen, green, [x - length, y - width, length*2, width*2], 2 )
+    r = radius
+    pygame.draw.ellipse(screen, green, [x - r/2, y - r/2, r, r], 3)
     pygame.display.update()
 
 
@@ -435,17 +456,24 @@ def allowExit():
         if e.type == QUIT or (e.type == KEYUP and e.key == K_ESCAPE):
             sys.exit("Leaving because you requested it.")
 
-def searchOptimalPath(optimalPath,index,xPos,yPos,l1,w1):
+def searchOptimalPath(optimalPath,index,xPos,yPos,r):
     """
     Searches the given list of nodes and outputs the closest one outside specified region
     """
     counter = index # Begin searching at node containing robot location
-    while optimalPath[counter].x <= (xPos + l1) and optimalPath[counter].y <= (yPos + w1):
+    x = optimalPath[counter].x
+    y = optimalPath[counter].y
+    while checkCircle(x,y,xPos,yPos,r) == True:
         counter += 1
+        x = optimalPath[counter].x
+        y = optimalPath[counter].y
 
     return optimalPath[index].x, optimalPath[index].y, counter
 
+
+# ===== Main program =====
 def main():
+    # Intialization
     pygame.init()
     global screen
     screen = pygame.display.set_mode(WINSIZE)
@@ -461,25 +489,42 @@ def main():
     screen.fill(white)
     obsDraw(pygame, screen)
 
-    start = Node(25.0, 25.0)  # Start in top-left corner
-    goal = Node(625, 450.0) # End in bottom-right corner
+    # Start and goal positions
+    start = Node(25.0, 75.0)  # Start in top-left corner
+    goal = Node(625, 75.0) # End in bottom-right corner
 
+    # Record start time
     startTime = time.time()
     totalNodes = 0
 
     # Draw start and goal nodes
     startGoalDraw(start,goal)
+
+    # Do first search
     PATH_NODES, numNodes = RRT(goal,start) # solve from goal to robot
     totalNodes += numNodes
     optimalPath = recordPath(PATH_NODES)
 
+    # Start tracking
     goal_reached = False
     counter = 0
+    totalCost = 0
+    REGION_PATH_NODES =[]
+    obsVisited = 0
+    robotInRegion = False
+    validCounter = -1
 
+    # Begin robot animation
     while goal_reached == False:
 
         pos = optimalPath[counter]
 
+        # If robot traveled along a diverted path,
+        #   Check if robot has now reached back to original optimal path
+        if counter == validCounter:
+            robotInRegion = False
+
+        # Check if robot reached goal
         if pos == optimalPath[-1]:
             screen.fill(white)
             updateObs() # Move stored position of obstacles
@@ -512,6 +557,12 @@ def main():
             updateObs() # Move stored position of obstacles
             obsDraw(pygame, screen) # Draw obstacles on map
             drawPath(PATH_NODES, pygame, screen) # Draw last known optimal path
+
+            # Draw any diverted region paths
+            if REGION_PATH_NODES: # if list is not empty
+                for path in REGION_PATH_NODES:
+                    drawNewPath(path, pygame, screen)
+
             startGoalDraw(start,goal) # Draw start and goal positions
             xPos = robotStart[0] + (robotEnd[0] - robotStart[0])*(inc/(robotSpeed*1.0))
             yPos = robotStart[1] + (robotEnd[1] - robotStart[1])*(inc/(robotSpeed*1.0))
@@ -520,24 +571,49 @@ def main():
 
             # Track path in front of robot
             # Sensor 1
-            l1 = 40
-            w1 = 40
-            sensor1 = [xPos,yPos,l1,w1]
-            animateSensor(xPos,yPos,l1,w1)
-            # If any obstacle blocks path around robot
-            if checkCollision(sensor1, OBS) == True:
+            r1 = 50
+            sensorX = xPos + r1/3
+            sensorY = yPos
+            sensor1 = [sensorX,sensorY,r1]
+            animateSensor(sensorX,sensorY,r1)
+
+            # If a robot encounters the an obstacle, divert around
+            # The robot will only search to divert once
+            #   and will NOT divert again until back on the optimal path
+            if checkCollision(sensor1, OBS) == True and robotInRegion == False:
                 # Find closest node on optimal path outside sensor region
-                counter -= 1 # offset automatic increase of counter to give correct robot location node
-                newGoalX, newGoalY, newCounter = searchOptimalPath(optimalPath,counter,xPos,yPos,l1,w1)
-                print("OBSTACLE DETECTED. EXPLORING NEW PATH TO GOAL.")
-                newGoal = Node(newGoalX,newGoalY)
-                newStart = Node(xPos,yPos)
+                print("OBSTACLE DETECTED. DIVERTING.")
+                robotInRegion = True
+                newStart = Node(xPos,yPos) # New start position is robot's current position
+                nodesAhead = 10
+                newCounter = counter + nodesAhead # Choosing a node further down optimal path
+                # Check if # nodes ahead is inside obstacle
+                nodeSensor = [optimalPath[counter].x,optimalPath[counter].y,1] # Mock sensor with radius 1
+                while checkCollision(nodeSensor,OBS) == True:
+                    nodesAhead += 1
+                    newCounter = counter + nodesAhead
+                # Setting a temporary new goal for robot to avoid obstacle
+                newGoal = optimalPath[newCounter]
+                # Finding optimal path from robot to temp new goal
                 NEW_PATH_NODES, numNodes = RRT(newGoal,newStart)
                 totalNodes += numNodes
-                newPath = recordPath(NEW_PATH_NODES)
-                drawNewPath(NEW_PATH_NODES, pygame, screen) # Draw last known optimal path
-                counter = 0 # Reset counter of nodes for optimal path
-                pos = optimalPath[counter]
+                newOptimalPath = recordPath(NEW_PATH_NODES)
+                # Invalidate nodes from overall optimal path
+                invalidCounter = counter + 1
+                for ind in range(1,nodesAhead):
+                    optimalPath.pop(invalidCounter)
+                # Insert diverted path to overall optimal path
+                validCounter = invalidCounter
+                for node in newOptimalPath:
+                    optimalPath.insert(validCounter,node)
+                    validCounter += 1
+                # Add region path to collection of diverted paths explored
+                REGION_PATH_NODES.append(NEW_PATH_NODES)
+                # Draw any diverted region paths
+                for path in REGION_PATH_NODES:
+                    drawNewPath(path, pygame, screen)
+
+                print("ADJUSTED OPTIMAL PATH")
                 break
 
             time.sleep(0.1) # Pause to make animation easier to view
