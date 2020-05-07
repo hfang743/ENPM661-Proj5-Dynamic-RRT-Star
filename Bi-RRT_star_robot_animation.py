@@ -1,12 +1,17 @@
-"""
-implementation of paper by Sertac Karaman in 2010
-http://roboticsproceedings.org/rss06/p34.pdf
-"""
+# ENPM661
+# Project 5
+# Jaad Lepak
+# Haixiang Fang
+# Anshuman Singh
+# ===== ===== =====
+
+# ===== Libraries =====
 import sys, random, math, pygame
 from pygame.locals import *
 from math import sqrt,cos,sin,atan2
 import time
-#constants
+
+# ===== Constants =====
 XDIM = 640
 YDIM = 480
 WINSIZE = [XDIM, YDIM]
@@ -158,8 +163,7 @@ def updateObs():
     for i in range(0, numObs):
         OBS[i], OBS_motion[i] = move(OBS[i],OBS_motion[i],OBS)
 
-
-
+# ===== Node class =====
 class Node:
     def __init__(self, xcoord=0, ycoord=0, cost=0, parent=None):
         self.x = xcoord
@@ -167,8 +171,11 @@ class Node:
         self.cost = cost
         self.parent = parent
 
-
+# ===== Functions =====
 def obsDraw(pygame, screen):
+    """
+    Draws all obstacles
+    """
     blue = (0, 0, 255)
     for o in OBS:
         pygame.draw.rect(screen, blue, o)
@@ -177,10 +184,16 @@ def obsDraw(pygame, screen):
 
 
 def dist(p1, p2):
+    """
+    Calculates the distance between two points
+    """
     return sqrt((p1[0] - p2[0]) ** 2 + (p1[1] - p2[1]) ** 2)
 
 
 def step_from_to(p1, p2):
+    """
+    Used to interpolate between two points
+    """
     if dist(p1, p2) < EPSILON:
         return p2
     else:
@@ -189,6 +202,9 @@ def step_from_to(p1, p2):
 
 
 def chooseParent(nn, newnode, nodes):
+    """
+    Chooses a parent node for a newly found node
+    """
     for p in nodes:
         if checkIntersect(p, newnode, OBS) and dist([p.x, p.y], [newnode.x, newnode.y]) < RADIUS and p.cost + dist(
                 [p.x, p.y], [newnode.x, newnode.y]) < nn.cost + dist([nn.x, nn.y], [newnode.x, newnode.y]):
@@ -199,6 +215,9 @@ def chooseParent(nn, newnode, nodes):
 
 
 def nearest_neighbor(nodes, q_target):
+    """
+    Connects the nodes in the branch
+    """
     q_near = nodes[0]
     for p in nodes:
         if dist([p.x, p.y], [q_target.x, q_target.y]) < dist([q_near.x, q_near.y], [q_target.x, q_target.y]):
@@ -207,11 +226,19 @@ def nearest_neighbor(nodes, q_target):
 
 
 def ccw(A, B, C):
+    """
+    A, B, C are three x,y coordinate positions
+    """
     return (C[1] - A[1]) * (B[0] - A[0]) > (B[1] - A[1]) * (C[0] - A[0])
 
 
-# Return true if line segments AB and CD intersect
 def checkIntersect(nodeA, nodeB, OBS):
+    """
+    Returns true if AB and CD intersect with any Obstacles
+    AB is a line drawn from one point to another
+    A and B are given as nodes
+    CD represents each side of each obstacle
+    """
     A = (nodeA.x, nodeA.y)
     B = (nodeB.x, nodeB.y)
     for o in OBS:
@@ -238,6 +265,9 @@ def checkIntersect(nodeA, nodeB, OBS):
 
 
 def extend(nodes, screen, black):
+    """
+    Extends random nodes used in the RRT search
+    """
     rand = Node(random.random() * XDIM, random.random() * YDIM)
     nn = nearest_neighbor(nodes, rand)
     interpolatedNode = step_from_to([nn.x, nn.y], [rand.x, rand.y])
@@ -257,6 +287,9 @@ def extend(nodes, screen, black):
 
 
 def drawPath(nodes, pygame, screen):
+    """
+    Draws the optimal path
+    """
     last_node = nodes[-1]
     start = nodes[0]
     while last_node != start:
@@ -422,7 +455,9 @@ def allowExit():
         if e.type == QUIT or (e.type == KEYUP and e.key == K_ESCAPE):
             sys.exit("Leaving because you requested it.")
 
+# ===== Main program =====
 def main():
+    # Initializaiton
     pygame.init()
     global screen
     screen = pygame.display.set_mode(WINSIZE)
@@ -438,25 +473,29 @@ def main():
     screen.fill(white)
     obsDraw(pygame, screen)
 
+    # Start and goal positions
     start = Node(0.0, 0.0)  # Start in top-left corner
     goal = Node(525, 350.0) # End in bottom-right corner
 
-    # Draw start and goal nodes
-
+    # Record start time
     startTime = time.time()
     totalNodes = 0
+    # Do first search
     START_NODES, GOAL_NODES, numNodes = biRRT(start,goal)
     optimalPath = recordPath(START_NODES, GOAL_NODES)
 
+    # Start tracking
     goal_reached = False
     counter = 0
     totalCost = 0
     totalNodes += numNodes
 
+    # Begin robot animation
     while goal_reached == False:
 
-        pos = optimalPath[counter]
+        pos = optimalPath[counter] # Robot's current position along optimal path
 
+        # Check if robot reached goal
         if pos == optimalPath[-1]:
             screen.fill(white)
             updateObs() # Move stored position of obstacles
@@ -504,7 +543,7 @@ def main():
             # If any obstacle blocks path around robot
             if checkCollision(sensor1, OBS) == True:
                 print("OBSTACLE DETECTED. EXPLORING NEW PATH TO GOAL.")
-                start = Node(xPos,yPos)
+                start = Node(xPos,yPos) # New start position is robot's current position
                 START_NODES, GOAL_NODES, numNodes = biRRT(start,goal)
                 totalNodes += numNodes
                 optimalPath = recordPath(START_NODES, GOAL_NODES)
