@@ -65,8 +65,8 @@ def steer(qrand, qnear,ndist,node,screen,black):
 
 
 def main():
-    #node = []
-    #qinit = Node(0,0)
+    # node = []
+    # qinit = Node(0,0)
     qinit.cost = 0
     qinit.parent = None
     node.append(qinit)
@@ -150,16 +150,16 @@ if __name__ == '__main__':
             else:
                 vel=temp1vel*30
 
-            if x1_pos> 500 or x1_pos< 50 :
-                vel1 = -vel1
-            if vel1>0:
-                temp2vel = 1
-            if vel1<0:
-                temp2vel = -1
-            if dist(qinit.x, qinit.y, x1_pos, y1_pos) < 100:
-                vel1 = 0
-            else:
-                vel1 = temp2vel*20
+            # if x1_pos> 500 or x1_pos< 50 :
+            #     vel1 = -vel1
+            # if vel1>0:
+            #     temp2vel = 1
+            # if vel1<0:
+            #     temp2vel = -1
+            # if dist(qinit.x, qinit.y, x1_pos, y1_pos) < 100:
+            #     vel1 = 0
+            # else:
+            #     vel1 = temp2vel*20
 
 
 
