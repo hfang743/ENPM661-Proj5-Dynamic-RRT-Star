@@ -10,10 +10,10 @@ import time
 XDIM = 640
 YDIM = 480
 WINSIZE = [XDIM, YDIM]
-EPSILON = 10.0
+EPSILON = 10
 NUMNODES = 5000 #samples/iterations
 RADIUS = 30.0
-TARGET_RADIUS = 200.0
+TARGET_RADIUS = 100.0
 
 # ===== Dynamic Obstacles =====
 """
