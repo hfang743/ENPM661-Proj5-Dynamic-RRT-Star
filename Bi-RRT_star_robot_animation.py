@@ -25,9 +25,13 @@ For each rectangle obstacle, list with the following:
 """
 # Obstacles
 global OBS
-OBS = [[200,100,50,50]]
-OBS.append([400,300,50,50])
-OBS.append([200,200,50,50])
+OBS = [[50,50,50,50]]
+OBS.append([150,150,50,50])
+OBS.append([250,250,50,50])
+OBS.append([350,350,50,50])
+OBS.append([450,250,50,50])
+OBS.append([550,150,50,50])
+
 """
 For each rectangle obstacle, list with the following:
     X units to move per tickhttps://stackoverflow.com/questions/16994243/pygame-not-filled-shapes-python
@@ -38,9 +42,13 @@ For each rectangle obstacle, list with the following:
 Obstacles will bounce off boder and stay within map
 """
 # Motion informatoin
-OBS_motion = [[0,20,1,1]]
-OBS_motion.append([0,20,1,1])
-OBS_motion.append([20,0,1,1])
+OBS_motion = [[0,2,1,-1]]
+OBS_motion.append([0,2,1,-1])
+OBS_motion.append([0,2,1,-1])
+OBS_motion.append([0,2,1,1])
+OBS_motion.append([0,2,1,1])
+OBS_motion.append([0,2,1,1])
+
 
 def dir(obs,obs_motion,OBS):
     """
@@ -268,20 +276,20 @@ def checkCollision(robot, OBS):
     # Check if robot range reaches edge of another obstacle
     for o in OBS:
         # Check top-left corner
-        if (startX - length) > o[0] and (startY - width) > o[1]\
-        and (startX - length) < (o[0] + o[2]) and (startY - width) < (o[1] + o[3]):
+        if (startX - length) >= o[0] and (startY - width) >= o[1]\
+        and (startX - length) <= (o[0] + o[2]) and (startY - width) <= (o[1] + o[3]):
             return True
         # Check top-right corner
-        if (startX + length) > o[0] and (startY - width) > o[1]\
-        and (startX + length) < (o[0] + o[2]) and (startY - width) < (o[1] + o[3]):
+        if (startX + length) >= o[0] and (startY - width) >= o[1]\
+        and (startX + length) <= (o[0] + o[2]) and (startY - width) <= (o[1] + o[3]):
             return True
         # Check bottom-left corner
-        if (startX - length) > o[0] and (startY + width) > o[1]\
-        and (startX - length) < (o[0] + o[2]) and (startY + width) < (o[1] + o[3]):
+        if (startX - length) >= o[0] and (startY + width) >= o[1]\
+        and (startX - length) <= (o[0] + o[2]) and (startY + width) <= (o[1] + o[3]):
             return True
         # Check bottom-right corner
-        if (startX + length) > o[0] and (startY + width) > o[1]\
-        and (startX + length) < (o[0] + o[2]) and (startY + width) < (o[1] + o[3]):
+        if (startX + length) >= o[0] and (startY + width) >= o[1]\
+        and (startX + length) <= (o[0] + o[2]) and (startY + width) <= (o[1] + o[3]):
             return True
 
     return False
@@ -312,8 +320,6 @@ def biRRT(start,goal):
     while i < NUMNODES and flag != True:
 
         start_nodes = extend(start_nodes, screen, black)
-
-
         goal_nodes = extend(goal_nodes, screen, black)
         q_target = goal_nodes[-1]
 
@@ -341,15 +347,11 @@ def biRRT(start,goal):
         total_cost = start_nodes[-1].cost + goal_nodes[-1].cost
 
         print("Cost       : " + str(total_cost) + ' units')
-        print("Time Taken : " + str(time_taken) + ' s')
+        print("Time Taken to find optimal path: " + str(time_taken) + ' s')
+        print("Number of nodes explored: " + str(i) + ' nodes')
 
         drawPath(start_nodes, pygame, screen)
         drawPath(goal_nodes, pygame, screen)
-
-        global START_NODES
-        global GOAL_NODES
-        START_NODES = start_nodes
-        GOAL_NODES = goal_nodes
 
         pygame.display.update()
         #time.sleep(0.01)
@@ -357,7 +359,7 @@ def biRRT(start,goal):
     else:
         print("Path not found. Try increasing the number of iterations")
 
-    return START_NODES,GOAL_NODES
+    return start_nodes,goal_nodes
 
 
 def recordPath(startNodes,goalNodes):
@@ -463,8 +465,11 @@ def main():
         robotStart = [pos.x,pos.y] # Robot at current node
         robotEnd = [optimalPath[counter + 1].x, optimalPath[counter + 1].y] # Robot traveling to next node
 
+        # Increment counter for next node
+        counter += 1
+
         # Define an integer for robot speed (1 is fastest, higher numbers slow down robot)
-        robotSpeed = 6
+        robotSpeed = 10
         for inc in range(1,robotSpeed):
             screen.fill(white)
             updateObs() # Move stored position of obstacles
@@ -476,22 +481,24 @@ def main():
             animateRobot(xPos,yPos) # Shows robot as green circle along optimal path
 
             # Track path in front of robot
-            length = 25
-            width = 25
-            animateSensor(xPos,yPos,length,width) # shows path in front of robot
-            # If any obstacle blocks path in front of robot
-            if checkCollision([xPos,yPos,length,width], OBS) == True:
-                time.sleep(0.1)
+            # Sensor 1
+            l1 = 20
+            w1 = 20
+            sensor1 = [xPos,yPos,l1,w1]
+            animateSensor(xPos,yPos,l1,w1)
+            # If any obstacle blocks path around robot
+            if checkCollision(sensor1, OBS) == True:
+                print("OBSTACLE DETECTED. EXPLORING NEW PATH TO GOAL.")
                 start = Node(xPos,yPos)
                 START_NODES, GOAL_NODES = biRRT(start,goal)
                 optimalPath = recordPath(START_NODES, GOAL_NODES)
-                counter = 0
+                counter = 0 # Reset counter of nodes for optimal path
+                pos = optimalPath[counter]
                 break
 
-            time.sleep(0.1)
-            allowExit()
+            time.sleep(0.1) # Pause to make animation easier to view
+            allowExit() # Allow user to press ESC to exit at any time
 
-        counter += 1
 
 
         allowExit()
