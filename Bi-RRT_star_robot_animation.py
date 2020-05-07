@@ -13,7 +13,7 @@ WINSIZE = [XDIM, YDIM]
 EPSILON = 10.0
 NUMNODES = 5000 #samples/iterations
 RADIUS = 30.0
-TARGET_RADIUS = 200.0
+TARGET_RADIUS = 10.0
 
 # ===== Dynamic Obstacles =====
 """
@@ -42,7 +42,7 @@ For each rectangle obstacle, list with the following:
 Obstacles will bounce off boder and stay within map
 """
 # Motion informatoin
-OBS_motion = [[0,2,1,-1]]
+OBS_motion = [[0,2,1,1]]
 OBS_motion.append([0,2,1,-1])
 OBS_motion.append([0,2,1,-1])
 OBS_motion.append([0,2,1,1])
@@ -346,7 +346,9 @@ def biRRT(start,goal):
         time_taken = end_time - start_time
         total_cost = start_nodes[-1].cost + goal_nodes[-1].cost
 
-        print("Cost       : " + str(total_cost) + ' units')
+        print("")
+        print("Bi-RRT Stats")
+        print("")
         print("Time Taken to find optimal path: " + str(time_taken) + ' s')
         print("Number of nodes explored: " + str(i) + ' nodes')
 
@@ -359,7 +361,9 @@ def biRRT(start,goal):
     else:
         print("Path not found. Try increasing the number of iterations")
 
-    return start_nodes,goal_nodes
+    totalNodes = i
+
+    return start_nodes,goal_nodes,totalNodes
 
 
 def recordPath(startNodes,goalNodes):
@@ -438,16 +442,20 @@ def main():
 
     # Draw start and goal nodes
 
-
-    START_NODES, GOAL_NODES = biRRT(start,goal)
+    startTime = time.time()
+    totalNodes = 0
+    START_NODES, GOAL_NODES, numNodes = biRRT(start,goal)
     optimalPath = recordPath(START_NODES, GOAL_NODES)
 
     goal_reached = False
     counter = 0
+    totalCost = 0
+    totalNodes += numNodes
 
     while goal_reached == False:
 
         pos = optimalPath[counter]
+        totalCost += pos.cost
 
         if pos == optimalPath[-1]:
             screen.fill(white)
@@ -457,6 +465,13 @@ def main():
             startGoalDraw(start,goal) # Draw start and goal positions
             animateRobot(goal.x,goal.y) # Shows robot as green circle along optimal path
             goal_reached = True
+            endTime = time.time()
+            totalTime = endTime - startTime
+            print("")
+            print("===== GOAL REACHED =====")
+            print("Total time: ", totalTime, " seconds")
+            print("Total cost: ", totalCost)
+            print("Total nodes explored: ", totalNodes)
             print("Goal reached. Close window to exit.")
             break
 
@@ -490,7 +505,8 @@ def main():
             if checkCollision(sensor1, OBS) == True:
                 print("OBSTACLE DETECTED. EXPLORING NEW PATH TO GOAL.")
                 start = Node(xPos,yPos)
-                START_NODES, GOAL_NODES = biRRT(start,goal)
+                START_NODES, GOAL_NODES, numNodes = biRRT(start,goal)
+                totalNodes += numNodes
                 optimalPath = recordPath(START_NODES, GOAL_NODES)
                 counter = 0 # Reset counter of nodes for optimal path
                 pos = optimalPath[counter]

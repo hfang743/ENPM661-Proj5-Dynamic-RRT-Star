@@ -42,7 +42,7 @@ For each rectangle obstacle, list with the following:
 Obstacles will bounce off boder and stay within map
 """
 # Motion informatoin
-OBS_motion = [[0,2,1,1]]
+OBS_motion = [[0,3,1,1]]
 OBS_motion.append([0,2,1,-1])
 OBS_motion.append([0,2,1,-1])
 OBS_motion.append([0,2,1,1])
@@ -306,9 +306,9 @@ def checkgoal(newnode, goal):
     if dist([goal.x, goal.y], [newnode.x, newnode.y]) < RADIUS and checkIntersect(newnode, goal, OBS):
         return True
 
-def RRT(start,goal):
+def RRT_Star(start,goal):
     """
-    Runs RRT search and returns optimal path
+    Runs Single RRT* search and returns optimal path
     """
     nodes = []
 
@@ -328,17 +328,15 @@ def RRT(start,goal):
         newnode = Node(interpolatedNode[0], interpolatedNode[1])
 
         if checkIntersect(nn, newnode, OBS):
-            newnode.cost = nn.cost + dist([nn.x, nn.y], [newnode.x, newnode.y])
-            newnode.parent = nn
+            [newnode, nn] = chooseParent(nn, newnode, nodes)
             nodes.append(newnode)
             pygame.draw.line(screen, black, [nn.x, nn.y], [newnode.x, newnode.y])
 
         if checkgoal(newnode, goal):
             print("Path found")
-            goal.cost = newnode.cost + dist([newnode.x, newnode.y], [goal.x, goal.y])
-            goal.parent = newnode
+            [goal, newnode] = chooseParent(newnode, goal, nodes)
             nodes.append(goal)
-            pygame.draw.line(screen, black, [newnode.x, newnode.y], [goal.x, goal.y])
+
         pygame.display.update()
         i += 1
 
@@ -351,14 +349,14 @@ def RRT(start,goal):
         time_taken = end_time - start_time
         total_cost = nodes[-1].cost
         print("")
-        print("RRT Stats")
+        print("RRT* Stats")
         print("")
         print("Cost       : " + str(total_cost) + ' units')
         print("Time Taken : " + str(time_taken) + ' sec')
 
         drawPath(nodes, pygame, screen)
         pygame.display.update()
-    # pygame.image.save(screen, "rrt.jpg")
+    # pygame.image.save(screen, "rrt_star.jpg")
     else:
         print("Path not found. Try increasing the number of iterations")
 
@@ -429,12 +427,12 @@ def main():
     obsDraw(pygame, screen)
 
     start = Node(5.0, 5.0)  # Start in top-left corner
-    goal = Node(625, 450.0) # End in bottom-right corner
+    goal = Node(550, 350.0) # End in bottom-right corner
 
     # Draw start and goal nodes
 
 
-    PATH_NODES = RRT(start,goal)
+    PATH_NODES = RRT_Star(start,goal)
     optimalPath = recordPath(PATH_NODES)
 
     goal_reached = False
@@ -485,7 +483,7 @@ def main():
             if checkCollision(sensor1, OBS) == True:
                 print("OBSTACLE DETECTED. EXPLORING NEW PATH TO GOAL.")
                 start = Node(xPos,yPos)
-                PATH_NODES = RRT(start,goal)
+                PATH_NODES = RRT_Star(start,goal)
                 optimalPath = recordPath(PATH_NODES)
                 counter = 0 # Reset counter of nodes for optimal path
                 pos = optimalPath[counter]
