@@ -13,11 +13,8 @@ WINSIZE = [XDIM, YDIM]
 EPSILON = 10
 NUMNODES = 5000 #samples/iterations
 RADIUS = 30.0
-<<<<<<< HEAD
 TARGET_RADIUS = 10.0
-=======
-TARGET_RADIUS = 100.0
->>>>>>> bb06cc16f689c87f519b45bf6c6535e7e66b6e42
+
 
 # ===== Dynamic Obstacles =====
 """
@@ -47,7 +44,7 @@ Obstacles will bounce off boder and stay within map
 """
 # Motion informatoin
 OBS_motion = [[0,2,1,1]]
-OBS_motion.append([0,2,1,-1])
+OBS_motion.append([0,2,1,1])
 OBS_motion.append([0,2,1,-1])
 OBS_motion.append([0,2,1,1])
 OBS_motion.append([0,2,1,1])
@@ -459,7 +456,6 @@ def main():
     while goal_reached == False:
 
         pos = optimalPath[counter]
-        totalCost += pos.cost
 
         if pos == optimalPath[-1]:
             screen.fill(white)
@@ -473,10 +469,10 @@ def main():
             totalTime = endTime - startTime
             print("")
             print("===== GOAL REACHED =====")
-            print("Total time: ", totalTime, " seconds")
-            print("Total cost: ", totalCost)
-            print("Total nodes explored: ", totalNodes)
-            print("Goal reached. Close window to exit.")
+            print("Total time: " + str(totalTime) + " seconds")
+            print("Total cost: " + str(totalCost))
+            print("Total nodes explored: " + str(totalNodes))
+            print("Close window to exit.")
             break
 
 
@@ -498,7 +494,7 @@ def main():
             xPos = robotStart[0] + (robotEnd[0] - robotStart[0])*(inc/(robotSpeed*1.0))
             yPos = robotStart[1] + (robotEnd[1] - robotStart[1])*(inc/(robotSpeed*1.0))
             animateRobot(xPos,yPos) # Shows robot as green circle along optimal path
-
+            totalCost += (robotEnd[0] - robotStart[0])*(inc/(robotSpeed*1.0))
             # Track path in front of robot
             # Sensor 1
             l1 = 20
