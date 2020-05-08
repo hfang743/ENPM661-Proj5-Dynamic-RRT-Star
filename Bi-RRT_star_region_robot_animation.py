@@ -21,7 +21,6 @@ RADIUS = 30.0
 TARGET_RADIUS = 10.0
 
 
-
 # ===== Dynamic Obstacles =====
 """
 For each rectangle obstacle, list with the following:
@@ -420,6 +419,88 @@ def biRRT(start,goal):
 
     return start_nodes,goal_nodes,totalNodes
 
+def RRT(start,goal):
+    """
+    Runs RRT search and returns optimal path
+    """
+    nodes = []
+
+    nodes.append(start)
+    i = 0
+    start_time = time.time()
+    while i < NUMNODES and goal not in nodes:
+
+        rand = Node(random.random() * XDIM, random.random() * YDIM)
+
+        nn = nodes[0]
+        for p in nodes:
+            if dist([p.x, p.y], [rand.x, rand.y]) < dist([nn.x, nn.y], [rand.x, rand.y]):
+                nn = p
+
+        interpolatedNode = step_from_to([nn.x, nn.y], [rand.x, rand.y])
+        newnode = Node(interpolatedNode[0], interpolatedNode[1])
+
+        if checkIntersect(nn, newnode, OBS):
+            newnode.cost = nn.cost + dist([nn.x, nn.y], [newnode.x, newnode.y])
+            newnode.parent = nn
+            nodes.append(newnode)
+            pygame.draw.line(screen, black, [nn.x, nn.y], [newnode.x, newnode.y])
+
+        if checkgoal(newnode, goal):
+            print("Path found")
+            goal.cost = newnode.cost + dist([newnode.x, newnode.y], [goal.x, goal.y])
+            goal.parent = newnode
+            nodes.append(goal)
+            pygame.draw.line(screen, black, [newnode.x, newnode.y], [goal.x, goal.y])
+        pygame.display.update()
+        i += 1
+
+        for e in pygame.event.get():
+            if e.type == QUIT or (e.type == KEYUP and e.key == K_ESCAPE):
+                sys.exit("ESC key pressed. Exiting program..")
+
+    if goal in nodes:
+        end_time = time.time()
+        time_taken = end_time - start_time
+        total_cost = nodes[-1].cost
+        print("")
+        print("RRT Stats")
+        print("")
+        print("Cost       : " + str(total_cost) + ' units')
+        print("Time Taken : " + str(time_taken) + ' sec')
+
+        drawPath(nodes, pygame, screen)
+        pygame.display.update()
+    # pygame.image.save(screen, "rrt.jpg")
+    else:
+        print("Path not found. Try increasing the number of iterations")
+
+    totalNodes = i
+    return nodes, totalNodes
+
+def recordBiRRTPath(startNodes,goalNodes):
+    """
+    Captures all nodes from start to goal for BiRRT search
+    """
+    startPath = []
+    goalPath = []
+    path = []
+
+    # Extract nodes from goal
+    last_node = goalNodes[-1]
+    start = goalNodes[0]
+    while last_node != start:
+        path.append(last_node)
+        last_node = last_node.parent
+
+    # Extract nodes from start
+    last_node = startNodes[-1]
+    start = startNodes[0]
+    while last_node != start:
+        path.insert(0,last_node)
+        last_node = last_node.parent
+
+    return path
 
 def recordPath(nodes):
     """
@@ -513,9 +594,9 @@ def main():
     startGoalDraw(start,goal)
 
     # Do first search
-    PATH_NODES, numNodes = biRRT(goal,start) # solve from goal to robot
+    GOAL_NODES, START_NODES, numNodes = biRRT(goal,start) # solve from goal to robot
     totalNodes += numNodes
-    optimalPath = recordPath(PATH_NODES)
+    optimalPath = recordBiRRTPath(START_NODES,GOAL_NODES)
 
     # Start tracking
     goal_reached = False
@@ -568,7 +649,8 @@ def main():
             screen.fill(white)
             updateObs() # Move stored position of obstacles
             obsDraw(pygame, screen) # Draw obstacles on map
-            drawPath(PATH_NODES, pygame, screen) # Draw last known optimal path
+            drawPath(START_NODES, pygame, screen) # Draw last known optimal path
+            drawPath(GOAL_NODES, pygame, screen) # Draw last known optimal path
 
             # Draw any diverted region paths
             if REGION_PATH_NODES: # if list is not empty
@@ -608,7 +690,7 @@ def main():
                 # Setting a temporary new goal for robot to avoid obstacle
                 newGoal = optimalPath[newCounter]
                 # Finding optimal path from robot to temp new goal
-                NEW_PATH_NODES, numNodes = biRRT(newGoal,newStart)
+                NEW_PATH_NODES, numNodes = RRT(newGoal,newStart)
                 totalNodes += numNodes
                 newOptimalPath = recordPath(NEW_PATH_NODES)
                 # Invalidate nodes from overall optimal path
