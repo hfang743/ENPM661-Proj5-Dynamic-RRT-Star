@@ -35,7 +35,6 @@ OBS = [[50,50,50,50]]
 OBS.append([150,150,50,50])
 OBS.append([250,250,50,50])
 OBS.append([350,350,50,50])
-OBS.append([450,250,50,50])
 
 """
 For each rectangle obstacle, list with the following:
@@ -50,7 +49,6 @@ Obstacles will bounce off boder and stay within map
 OBS_motion = [[0,2,1,-1]]
 OBS_motion.append([0,2,1,-1])
 OBS_motion.append([0,2,1,-1])
-OBS_motion.append([0,2,1,1])
 OBS_motion.append([0,2,1,1])
 
 
@@ -679,7 +677,7 @@ def main():
                 print("OBSTACLE DETECTED. DIVERTING.")
                 robotInRegion = True
                 newStart = Node(xPos,yPos) # New start position is robot's current position
-                nodesAhead = 12
+                nodesAhead = 4
                 newCounter = counter + nodesAhead # Choosing a node further down optimal path
                 # Check if # nodes ahead is inside obstacle
                 nodeSensor = [optimalPath[newCounter].x,optimalPath[newCounter].y,r1] # Mock sensor
